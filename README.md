@@ -91,10 +91,13 @@ flowchart TB
   subgraph prompt["Every prompt"]
     P[Any prompt] --> V["🌲 Run, Forrest, Run! — invoked."]
     V --> T[Trail ID]
-    T --> R[runs/id/ lock truth plan steer artifacts]
+    T --> R[Generalist recruits]
+    R --> S[Specialist authors first-slice MECE stories]
+    S --> U[Subvisions pull exclusive payloads]
+    U --> Y[Synthesize and revise the living hypothesis]
   end
   C --> H
-  T --> O[Observer → abstracted notes]
+  Y --> O[Observer → abstracted notes]
   O --> F[Rare foundational skills → community PRs]
   SYNC[GitHub main] -.->|on install / --sync| C
 ```
@@ -153,12 +156,13 @@ Type anything anytime. Steer is full freedom. Nothing already on the trail is th
 ## How a prompt becomes a trail
 
 1. **Lock** — one sentence goal + checks that prove done.
-2. **Split atoms** — separate facts, preferences, and unknowns.
-3. **Probe** — cheap-ping known warrants; experiment on unknowns.
-4. **Do** — implement; never stop at a plan.
-5. **Check** — run real commands/tests against the world.
-6. **Checkpoint** — write evidence under one run ID.
-7. **Report** — two 🌲 lines; invite steer.
+2. **Recruit** — a generalist consultant scores specialists with the likelihood-ratio function. The generalist does **not** write the plan.
+3. **Hypothesis** — the recruited specialist bets on the work, then writes MECE stories for the **first** sub-objective only.
+4. **Subvisions** — one isolated worker per story; each pulls only its payload.
+5. **Synthesize** — did that slice actually get met?
+6. **Revise** — the specialist re-checks whether the remaining bet is still right. Allowed until the last atom, including a full rethink. You can add stories.
+7. **Checkpoint** — evidence under one run ID.
+8. **Report** — two 🌲 lines; invite steer.
 
 Chat is not memory. The trail is.
 
@@ -180,7 +184,14 @@ Full loop spec: [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md) · Build guide: [`HOW_T
 ├── runs/<id>/              ← one prompt
 │   ├── lock.md
 │   ├── truth.md
-│   ├── plan.md
+│   ├── plan.md             ← living hypothesis (specialist-authored)
+│   ├── recruit.json        ← likelihood-ratio scores; question; skill set
+│   ├── stories.json        ← MECE stories for the current slice
+│   ├── who.md              ← who did what (recruiter vs specialists)
+│   ├── hypothesis.json
+│   ├── synthesis.json
+│   ├── revisions.jsonl
+│   ├── subvisions/<id>/    ← exclusive payload per story
 │   ├── trail.md
 │   ├── checkpoint.json
 │   ├── steer.jsonl
@@ -231,6 +242,9 @@ python3 -m runforrestrun --watch                # pick up newly installed IDEs/C
 python3 -m runforrestrun --status               # canonical home, hosts, last sync
 python3 -m runforrestrun "fix the failing test" # start a trail from the shell
 python3 -m runforrestrun --steer RUN_ID --message "use purple, not pink"
+python3 -m runforrestrun --add-stories RUN_ID --message "add these 7 more stories: a; b; c; d; e; f; g"
+python3 -m runforrestrun --complete-story RUN_ID --story S1 --message "pytest passed"
+python3 -m runforrestrun --revise RUN_ID
 python3 -m runforrestrun --consent cheap-ping-not-literature --yes --credit "Your Name"
 python3 -m runforrestrun --json                 # machine-readable output (with other flags)
 ```
@@ -298,6 +312,12 @@ run-forrest-run/
 │   ├── upstream.py          ← always-latest sync from main
 │   ├── hosts.py             ← IDE/CLI detection
 │   ├── trail.py             ← run ID + artifacts
+│   ├── signature.py         ← problem atoms and MECE cuts
+│   ├── recruitment.py       ← likelihood-ratio specialist scoring
+│   ├── stories.py           ← MECE first-slice stories
+│   ├── revision.py          ← living hypothesis
+│   ├── synthesis.py         ← was the slice met?
+│   ├── initiative.py        ← recruit → stories → subvisions → revise
 │   ├── voice.py             ← two-line 🌲 formatter
 │   ├── observer.py          ← depersonalized observations
 │   └── platform.py          ← rare capability proposals + consent
