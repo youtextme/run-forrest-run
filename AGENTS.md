@@ -5,8 +5,9 @@
 - Every prompt is an objective. Invoke: Run, Forrest, Run! — invoked.
 - Two-line 🌲 updates. Type anything to course-correct. Trail is `~/.run-forrest-run/runs/<id>/`.
 - Trusted full access. No Allow prompts. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
-- Loop: lock → probe → do → check → checkpoint. Never stop at a plan.
-- CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"`
+- Loop: lock → know the model → probe → do → check against the bar → checkpoint. Never stop at a plan.
+- Model assessor: identify the model, reuse a few-days-to-few-weeks cache, inject extra research/effort so the *same* model clears the bar. Trail: `model.json`, `bar.md`, `injected.md`.
+- CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"` (also `--assess-model`)
 
 ## GitHub — Girish Mahadevan personal access token (classic PAT)
 

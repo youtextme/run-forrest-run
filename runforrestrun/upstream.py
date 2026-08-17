@@ -18,9 +18,10 @@ RAW_BASE = "https://raw.githubusercontent.com/youtextme/run-forrest-run/main"
 SYNC_FILES = (
     "SKILL.md",
     "AGENTS.md",
-    "RUN_FOREST_RUN.md",
+    "RUN_FORREST_RUN.md",
     "HOW_TO_BUILD.md",
     "runforrestrun/frontier.json",
+    "runforrestrun/model_catalog.json",
 )
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from runforrestrun.assessor import assess_and_attach
 from runforrestrun.autonomy import check_autonomy
 from runforrestrun.install import watch_once
 from runforrestrun.observer import record_observation
@@ -41,15 +42,23 @@ def run_objective(
         autonomous=auto.ok,
         need=auto.need,
     )
+    assessment = assess_and_attach(run_id, objective)
     write_truth(
         run_id,
         f"# Atoms\n\nObjective: {objective}\n\n"
+        f"Model: {assessment.identity.label()} (source: {assessment.identity.source})\n"
+        f"Bar: {assessment.bar.get('min_score')} — same model, plug the gaps.\n\n"
         f"Unknown until probed. Designed disconfirmation comes first.\n"
         f"Type to course-correct. This file is the semantic scratch for the run.\n",
     )
     write_plan(
         run_id,
-        f"# Plan\n\n1. Lock the noun.\n2. Probe unknowns.\n3. Do the work.\n4. Check evidence.\n",
+        f"# Plan\n\n"
+        f"1. Lock the noun. Know the model ({assessment.identity.label()}).\n"
+        f"2. Apply injected bar-raiser prompts — extra research, extra data points.\n"
+        f"3. Probe unknowns.\n"
+        f"4. Do the work. Never stop at a plan.\n"
+        f"5. Check evidence against bar {assessment.bar.get('min_score')}.\n",
     )
     append_event(run_id, "laboratory", "trail opened; waiting on probes")
     record_observation(
@@ -60,6 +69,8 @@ def run_objective(
         run_id=run_id,
     )
     proposal = maybe_propose(objective, run_id=run_id)
+    if assessment.voice:
+        voice = voice + "\n" + assessment.voice
     if proposal:
         voice = voice + "\n" + str(proposal.get("voice") or "")
     return {
@@ -73,4 +84,8 @@ def run_objective(
         "new_hosts": watch.get("new_hosts") or [],
         "proposal": proposal,
         "canonical": watch.get("canonical"),
+        "model": assessment.identity.label(),
+        "bar": assessment.bar,
+        "injected": assessment.injected,
+        "assessor": assessment.as_dict(),
     }

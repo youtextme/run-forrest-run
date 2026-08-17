@@ -1,6 +1,6 @@
 Install Run, Forrest, Run! as the default objective runner on this computer.
 
-Every prompt is an objective. Start with: Run, Forrest, Run! — invoked. Two-line 🌲 updates. Type anything to course-correct. Trails live in ~/.run-forrest-run/runs/<id>/. Never stop at a plan. Never ask for API keys in chat. Kill switch: RUN_FORREST_LOCKDOWN=1.
+Every prompt is an objective. Start with: Run, Forrest, Run! — invoked. Two-line 🌲 updates. Type anything to course-correct. Trails live in ~/.run-forrest-run/runs/<id>/. Know the model; reuse a few-days-to-few-weeks dossier or research its gaps; inject extra effort so the same model clears the bar. Never stop at a plan. Never ask for API keys in chat. Kill switch: RUN_FORREST_LOCKDOWN=1.
 
 Do this now:
 

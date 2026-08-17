@@ -78,6 +78,7 @@ This is the full inventory — not marketing fluff. After `./install.sh`, you ha
 | **Upstream sync** | Pull latest skill, constitution, and community catalog from GitHub `main` on every install/sync. | [`runforrestrun/upstream.py`](runforrestrun/upstream.py) |
 | **Frontier catalog** | LangGraph, CrewAI, AutoGen, and other loops as **methods** — compose them, don’t freeze them as law. | [`runforrestrun/frontier.json`](runforrestrun/frontier.json) |
 | **Observer** | Learns *how* you work. Strips names, emails, paths. Never ships who you are. | `~/.run-forrest-run/observations/` |
+| **Model assessor** | Knows which model is at work. Researches its latest strengths, deficiencies, and sample-set gaps. Caches a few days to a few weeks. Injects extra research and effort so the **same** model still clears the bar. | `~/.run-forrest-run/models/<slug>/` + trail `model.json` / `bar.md` / `injected.md` |
 | **Platform proposals** | Rare foundational capabilities only — opt-in PRs with **full credit** to you. Not a PR per prompt. | `~/.run-forrest-run/platform/proposals/` |
 | **CLI shim** | `run-forrest-run "fix the failing test"` from any shell. | `~/.local/bin/run-forrest-run` |
 | **Zero runtime deps** | Pure Python 3.10+. No pip packages required to run. | [`pyproject.toml`](pyproject.toml) |
@@ -95,6 +96,7 @@ flowchart TB
   end
   C --> H
   T --> O[Observer → abstracted notes]
+  T --> M[Model assessor → cache + injected bar]
   O --> F[Rare foundational skills → community PRs]
   SYNC[GitHub main] -.->|on install / --sync| C
 ```
@@ -124,7 +126,7 @@ python3 -m runforrestrun --status
 cat ~/.run-forrest-run/canonical/SYNC.json
 ```
 
-**Serious devs:** the behavior contract lives in root [`SKILL.md`](SKILL.md) and [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md). Those files are in `SYNC_FILES` — they update on every sync, not just the Python package version.
+**Serious devs:** the behavior contract lives in root [`SKILL.md`](SKILL.md) and [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md). Those files are in `SYNC_FILES` — they update on every sync, not just the Python package version.
 
 ---
 
@@ -152,17 +154,18 @@ Type anything anytime. Steer is full freedom. Nothing already on the trail is th
 
 ## How a prompt becomes a trail
 
-1. **Lock** — one sentence goal + checks that prove done.
-2. **Split atoms** — separate facts, preferences, and unknowns.
-3. **Probe** — cheap-ping known warrants; experiment on unknowns.
-4. **Do** — implement; never stop at a plan.
-5. **Check** — run real commands/tests against the world.
-6. **Checkpoint** — write evidence under one run ID.
-7. **Report** — two 🌲 lines; invite steer.
+1. **Lock** — one sentence goal + checks that prove done. **Know the model.**
+2. **Assess** — reuse a few-days-to-few-weeks dossier, or independently research this model's gaps and inject extra prompts.
+3. **Split atoms** — separate facts, preferences, and unknowns.
+4. **Probe** — cheap-ping known warrants; experiment on unknowns; extra web research to expand the sample set.
+5. **Do** — implement; never stop at a plan. Same model; more effort.
+6. **Check** — run real commands/tests against the world until the bar is met.
+7. **Checkpoint** — write evidence under one run ID.
+8. **Report** — two 🌲 lines; invite steer.
 
 Chat is not memory. The trail is.
 
-Full loop spec: [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md) · Build guide: [`HOW_TO_BUILD.md`](HOW_TO_BUILD.md)
+Full loop spec: [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md) · Build guide: [`HOW_TO_BUILD.md`](HOW_TO_BUILD.md)
 
 ---
 
@@ -173,7 +176,7 @@ Full loop spec: [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md) · Build guide: [`HOW_T
 ├── canonical/              ← one brain (skill, version, SYNC.json, docs)
 │   ├── SKILL.md
 │   ├── AGENTS.md
-│   ├── RUN_FOREST_RUN.md
+│   ├── RUN_FORREST_RUN.md
 │   ├── SYNC.json           ← last upstream pull (timestamp, ref, files)
 │   └── runforrestrun/
 │       └── frontier.json   ← community loop catalog (refreshed on sync)
@@ -182,10 +185,17 @@ Full loop spec: [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md) · Build guide: [`HOW_T
 │   ├── truth.md
 │   ├── plan.md
 │   ├── trail.md
+│   ├── model.json          ← which model, dossier, injected prompts
+│   ├── bar.md              ← good-enough score for this model + objective
+│   ├── injected.md         ← extra prompts that plug this model's gaps
 │   ├── checkpoint.json
 │   ├── steer.jsonl
 │   ├── events.jsonl
 │   └── artifacts/
+├── models/<slug>/          ← cached model dossiers (few days–few weeks)
+│   ├── dossier.json
+│   ├── research.md
+│   └── sources.jsonl
 ├── observations/           ← how you work (identity stripped)
 ├── platform/proposals/   ← rare foundational skills, opt-in
 └── hosts.json              ← IDEs/CLIs already defaulted
@@ -228,7 +238,8 @@ python3 -m runforrestrun --watch
 python3 -m runforrestrun --install              # install only
 python3 -m runforrestrun --sync                 # pull latest from GitHub main + re-default all hosts
 python3 -m runforrestrun --watch                # pick up newly installed IDEs/CLIs
-python3 -m runforrestrun --status               # canonical home, hosts, last sync
+python3 -m runforrestrun --status               # canonical home, hosts, last sync, model at work
+python3 -m runforrestrun --assess-model         # identify model, reuse or refresh dossier, print bar
 python3 -m runforrestrun "fix the failing test" # start a trail from the shell
 python3 -m runforrestrun --steer RUN_ID --message "use purple, not pink"
 python3 -m runforrestrun --consent cheap-ping-not-literature --yes --credit "Your Name"
@@ -241,6 +252,9 @@ Environment:
 |----------|--------|
 | `RUN_FORREST_LOCKDOWN=1` | Sandbox only — autonomy blocked |
 | `RUN_FORREST_SKIP_SYNC=1` | Do not pull from GitHub; use packaged copy |
+| `RUN_FORREST_SKIP_MODEL_RESEARCH=1` | Use the seeded model catalog; do not hit the web |
+| `RUN_FORREST_MODEL_CACHE_DAYS` | Dossier TTL (clamped 3–21, default 14) |
+| `RUN_FORREST_MODEL` | Override detected model name |
 | `RUN_FORREST_UPSTREAM` | Override upstream repo URL |
 | `RUN_FORREST_HOME` | Override `~/.run-forrest-run` (tests, custom layout) |
 
@@ -256,7 +270,7 @@ Environment:
 
 **Methods** (LangGraph, CrewAI, AutoGen, the next loop someone ships) are **gears** in [`frontier.json`](runforrestrun/frontier.json). Compose them. Don’t enshrine them as law.
 
-Full constitution: [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md)
+Full constitution: [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md)
 
 Aliases: `run forrest run`, `run forest run`, `true that`
 
@@ -290,7 +304,7 @@ pytest
 run-forrest-run/
 ├── SKILL.md                 ← agent skill (synced to canonical + all hosts)
 ├── AGENTS.md                ← host instruction block
-├── RUN_FOREST_RUN.md        ← constitution (tenets, loop, memory model)
+├── RUN_FORREST_RUN.md        ← constitution (tenets, loop, memory model)
 ├── HOW_TO_BUILD.md          ← implementers: modules, wiring, extension points
 ├── PROMPT.md                ← paste bootstrap for any chat
 ├── runforrestrun/           ← Python package (zero runtime deps)
@@ -298,6 +312,8 @@ run-forrest-run/
 │   ├── upstream.py          ← always-latest sync from main
 │   ├── hosts.py             ← IDE/CLI detection
 │   ├── trail.py             ← run ID + artifacts
+│   ├── assessor.py          ← model identity, cached research, bar raiser
+│   ├── model_catalog.json   ← AI-researcher prior (refreshed on sync)
 │   ├── voice.py             ← two-line 🌲 formatter
 │   ├── observer.py          ← depersonalized observations
 │   └── platform.py          ← rare capability proposals + consent

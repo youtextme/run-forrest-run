@@ -29,14 +29,34 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → split atoms → cheap-ping known warrants → experiment unknowns → do → check →
+Lock → know the model → split atoms → cheap-ping known warrants → experiment unknowns → do → check →
 checkpoint under one run ID → two-line report. Never stop at a plan. Papercuts:
 one lookup, stop.
 
 ## Trail
 
 Everything for this prompt lives in `~/.run-forrest-run/runs/<id>/` (lock, truth,
-plan, events, steer, artifacts, checkpoint). Chat is not memory.
+plan, events, steer, artifacts, checkpoint, **model.json / bar.md / injected.md**).
+Chat is not memory.
+
+## Model (bar raiser)
+
+From the first lock, know which model is at work. Do not switch models.
+The objective runner researches this model's latest capabilities, deficiencies,
+and sample-set gaps — then injects extra work so the same model still
+clears the bar.
+
+1. Identify the model (`RUN_FORREST_MODEL` or the host's model name).
+2. Read `~/.run-forrest-run/models/<slug>/dossier.json`. If it is a few days
+   to a few weeks old, reuse it. Do not re-research.
+3. If missing or stale: independently research the model (official card, evals,
+   known failure modes, what was not in training). Cache it.
+4. Follow `runs/<id>/injected.md`. Extra probes, more web research, more data
+   points, more effort — until `runs/<id>/bar.md` is met.
+5. Bridge gaps with this model: verify in the world, do not trust cutoff
+   memory, do not stop at the first plausible answer.
+
+CLI: `python3 -m runforrestrun --assess-model`
 
 ## Autonomy
 

@@ -11,7 +11,9 @@ Methods. Tenets stay in [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md).
 5. Watcher for new hosts.
 6. Observer that strips identity.
 7. Capability proposals that are rare and credited.
-8. Then the skill with `alwaysApply: true` and `AGENTS.md` for hosts without that flag.
+8. Model assessor: detect the model, cache a dossier (few days–few weeks),
+   inject same-model bridges until the bar is met.
+9. Then the skill with `alwaysApply: true` and `AGENTS.md` for hosts without that flag.
 
 ## One-command default
 
