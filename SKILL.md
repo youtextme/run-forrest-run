@@ -29,14 +29,36 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → split atoms → cheap-ping known warrants → experiment unknowns → do → check →
-checkpoint under one run ID → two-line report. Never stop at a plan. Papercuts:
-one lookup, stop.
+Lock → **Recruit** (generalist consultant only) → specialist writes the hypothesis
+and MECE stories for the **first** sub-objective → **subvisions** (one isolated
+worker per story) pull their own trail slice and do the work → **Synthesize**
+(was that slice met?) → **Revise** the hypothesis from new evidence (allowed
+until the last atom, including a full rethink) → next slice.
+
+Never stop at a plan. Never let the generalist author the plan or the stories.
+Papercuts: one lookup, stop.
+
+## Recruit
+
+Spend the first effort on *who*, not *how*. A generalist consultant identifies
+specialists and scores them with the likelihood-ratio function on the trail
+(`recruit.json`). The winner gets a specific question and a peaked skill set.
+**They** author the hypothesis and the stories. Every story is assigned to a
+named recruit. Who-did-what lives in `who.md`.
+
+## Stories
+
+MECE for the current slice only — mutually exclusive partitions, collectively
+exhaustive of that slice. Spawn one subvision per story; each pulls only
+`subvisions/<id>/payload.json` plus lock/truth/recruit. The human may add
+stories (`add these N more stories: ...`). The specialist re-checks MECE.
+Chat is not the handoff.
 
 ## Trail
 
 Everything for this prompt lives in `~/.run-forrest-run/runs/<id>/` (lock, truth,
-plan, events, steer, artifacts, checkpoint). Chat is not memory.
+plan, recruit, stories, who, subvisions, synthesis, revisions, events, steer,
+artifacts, checkpoint). Chat is not memory.
 
 ## Autonomy
 

@@ -17,5 +17,7 @@ Storage is `~/.run-forrest-run/`. Chat is not memory.
 The observer abstracts the person and keeps the pattern.
 The platform asks before a community PR, and the operator keeps the credit.
 
-Methods are not tenets. LangGraph, CrewAI, AutoGen, and whatever ships
-next week are loops we compose. Swap them. Do not freeze them as law.
+Methods are not tenets. The default method is **recruit → first-slice MECE
+stories → subvisions → synthesize → revise**. A generalist consultant
+recruits; a specialist authors. LangGraph, CrewAI, AutoGen, and whatever
+ships next week are loops we compose. Swap them. Do not freeze them as law.

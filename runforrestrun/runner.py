@@ -5,13 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from runforrestrun.autonomy import check_autonomy
+from runforrestrun.initiative import open_initiative
 from runforrestrun.install import watch_once
 from runforrestrun.observer import record_observation
 from runforrestrun.platform import maybe_propose
 from runforrestrun.trail import (
     append_event,
     start_trail,
-    write_plan,
     write_truth,
 )
 from runforrestrun.voice import opening
@@ -28,7 +28,7 @@ def run_objective(
     project_root: Path | None = None,
     packaged: Path | None = None,
 ) -> dict:
-    """Start a trail, speak two lines, keep everything under one ID."""
+    """Start a trail, recruit a specialist, write first-slice stories."""
     watch = watch_once(project_root=project_root, packaged=packaged)
     trail = start_trail(objective)
     run_id = trail["run_id"]
@@ -47,14 +47,12 @@ def run_objective(
         f"Unknown until probed. Designed disconfirmation comes first.\n"
         f"Type to course-correct. This file is the semantic scratch for the run.\n",
     )
-    write_plan(
-        run_id,
-        f"# Plan\n\n1. Lock the noun.\n2. Probe unknowns.\n3. Do the work.\n4. Check evidence.\n",
-    )
-    append_event(run_id, "laboratory", "trail opened; waiting on probes")
+    opened = open_initiative(run_id, objective, project_root=project_root)
+    opened.pop("recruitment_obj", None)
+    append_event(run_id, "laboratory", "trail opened; specialist recruited; first-slice stories ready")
     record_observation(
         kind="run",
-        note="objective started",
+        note="objective started with recruitment",
         example=objective,
         foundational_need="",
         run_id=run_id,
@@ -73,4 +71,7 @@ def run_objective(
         "new_hosts": watch.get("new_hosts") or [],
         "proposal": proposal,
         "canonical": watch.get("canonical"),
+        "recruitment": opened.get("recruitment"),
+        "hypothesis": opened.get("hypothesis"),
+        "stories": opened.get("stories"),
     }

@@ -38,7 +38,7 @@ def start_trail(objective: str, run_id: str | None = None) -> dict[str, Any]:
         "phase": "lock",
         "status": "running",
         "steer": [],
-        "next_action": "probe the first unknown atom",
+        "next_action": "recruit a specialist; they author first-slice stories",
     }
     (job / "lock.md").write_text(
         f"# Lock\n\nRun: `{rid}`\n\nThis run succeeds when the objective is evidenced:\n\n{objective}\n",

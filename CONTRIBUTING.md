@@ -16,6 +16,7 @@ pytest
 | If you are changing… | Edit… | Also update… |
 |---------------------|-------|--------------|
 | Agent behavior / voice | Root [`SKILL.md`](SKILL.md) | [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md) if tenets or loop change |
+| Recruitment / stories | [`runforrestrun/recruitment.py`](runforrestrun/recruitment.py), [`stories.py`](runforrestrun/stories.py), [`initiative.py`](runforrestrun/initiative.py) | [`HOW_TO_BUILD.md`](HOW_TO_BUILD.md) science function; tests in [`tests/test_initiative.py`](tests/test_initiative.py) |
 | Host install paths | [`runforrestrun/hosts.py`](runforrestrun/hosts.py) | [`HOW_TO_BUILD.md`](HOW_TO_BUILD.md) |
 | Always-latest sync list | [`runforrestrun/upstream.py`](runforrestrun/upstream.py) `SYNC_FILES` | README “Why you always get the latest” |
 | Community loop catalog | [`runforrestrun/frontier.json`](runforrestrun/frontier.json) | Keep entries as methods, not tenets |

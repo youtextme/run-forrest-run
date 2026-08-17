@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "runforrestrun"
-version = "0.1.0"
+version = "0.2.0"
 description = "Run, Forrest, Run! — the objective-runner platform. One install. Every prompt. Shared trail."
 readme = "README.md"
 requires-python = ">=3.10"
