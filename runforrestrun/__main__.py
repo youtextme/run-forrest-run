@@ -18,7 +18,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("objective", nargs="?", help="Objective to run")
     p.add_argument("--install", action="store_true", help="Detect hosts and install as the default")
     p.add_argument("--install-github", action="store_true", help="Install GitHub PAT for Cursor, Devin, OpenClaw, and all agents")
-    p.add_argument("--verify-bootstrap", action="store_true", help="Verify Cursor/Devin/OpenClaw session bootstrap (TDD check)")
+    p.add_argument("--verify-bootstrap", action="store_true", help="Verify all platform session bootstrap (TDD check)")
+    p.add_argument("--sample-prompt", action="store_true", help="Run sample prompt through objective runner (TDD)")
     p.add_argument("--watch", action="store_true", help="Re-scan for newly installed IDEs/CLIs")
     p.add_argument("--sync", action="store_true", help="Pull latest canonical from GitHub main and re-default all hosts")
     p.add_argument("--status", action="store_true", help="Show canonical home and hosts")
@@ -40,20 +41,34 @@ def main(argv: list[str] | None = None) -> int:
     packaged = _packaged()
 
     if args.verify_bootstrap:
-        from runforrestrun.session_bootstrap import verify_session_bootstrap
+        from runforrestrun.session_bootstrap import verify_all_platforms
 
-        result = verify_session_bootstrap(Path.cwd())
+        result = verify_all_platforms(Path.cwd())
         if args.json:
             print(json.dumps(result, indent=2, default=str))
         else:
             if result["ok"]:
-                print("OK — Cursor, Devin, OpenClaw bootstrap verified.")
+                print("OK — all platforms bootstrap verified:")
+                for name, info in result["platforms"].items():
+                    print(f"  {name}: ok")
                 print(result["first_message"])
             else:
                 print("FAIL — bootstrap errors:")
                 for err in result["errors"]:
                     print(f"  - {err}")
         return 0 if result["ok"] else 1
+
+    if args.sample_prompt:
+        from runforrestrun.prompt_processor import SAMPLE_PROMPT, process_sample_prompt
+
+        result = process_sample_prompt(packaged=packaged)
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
+        else:
+            print(result["voice"])
+            print(f"\ntrail: {result.get('job_dir')}")
+            print(f"sample: {SAMPLE_PROMPT[:60]}...")
+        return 0
 
     if args.install_github:
         from runforrestrun.github_credentials import install_github_credentials

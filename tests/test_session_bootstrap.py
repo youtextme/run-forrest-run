@@ -70,9 +70,8 @@ def test_install_then_all_hosts_bootstrap(tmp_path, monkeypatch):
     check = verify_session_bootstrap(project)
     assert check["ok"] is True, check["errors"]
     assert check["legacy_clean"] is True
-    assert check["hosts"]["cursor"]["ok"] is True
-    assert check["hosts"]["devin"]["ok"] is True
-    assert check["hosts"]["openclaw"]["ok"] is True
+    for name in ("cursor_local", "cursor_cloud", "devin_local", "devin_cloud", "openclaw"):
+        assert check["platforms"][name]["ok"] is True, check["platforms"][name]["errors"]
 
     skill = (project / ".cursor/skills/run-forrest-run/SKILL.md").read_text(encoding="utf-8")
     assert "alwaysApply: true" in skill

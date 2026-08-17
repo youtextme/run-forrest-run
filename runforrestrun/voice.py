@@ -3,24 +3,25 @@
 from __future__ import annotations
 
 from runforrestrun import ICON, INVOKE
+from runforrestrun.session_bootstrap import FIRST_MESSAGE_LINE1, FIRST_MESSAGE_LINE2
 
-# Movie spelling: Forrest, two r's. "Run, Forrest, Run!"
+
+def session_opening(*, autonomous: bool = True, need: str = "", run_id: str = "") -> str:
+    """Mandatory first message for every session (exact SKILL text when autonomous)."""
+    if autonomous:
+        return f"{FIRST_MESSAGE_LINE1}\n{FIRST_MESSAGE_LINE2}"
+    line2 = (
+        f"{ICON} I cannot run this autonomously. I need: {need}. "
+        f"Trail `{run_id}` is waiting — nothing already found is wasted."
+    )
+    return f"{FIRST_MESSAGE_LINE1}\n{line2}"
 
 
 def opening(*, noun: str, run_id: str, autonomous: bool, need: str = "") -> str:
     """The first thing every prompt hears. Exactly two lines."""
-    line1 = f"Run, Forrest, Run! — invoked. No warrant on {noun!r} yet."
     if autonomous:
-        line2 = (
-            f"I'll probe it. Type anything to course-correct. "
-            f"Trail `{run_id}` keeps the findings. I'm autonomous — step away if you want."
-        )
-    else:
-        line2 = (
-            f"I cannot run this autonomously. I need: {need}. "
-            f"Trail `{run_id}` is waiting — nothing already found is wasted."
-        )
-    return two_lines(line1, line2)
+        return session_opening(autonomous=True)
+    return session_opening(autonomous=False, need=need, run_id=run_id)
 
 
 def two_lines(line1: str, line2: str) -> str:

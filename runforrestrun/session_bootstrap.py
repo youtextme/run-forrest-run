@@ -1,4 +1,4 @@
-"""Session bootstrap contract — every Cursor, Devin, OpenClaw prompt starts with Run Forrest Run."""
+"""Session bootstrap contract — every platform variant starts with Run Forrest Run."""
 
 from __future__ import annotations
 
@@ -27,22 +27,34 @@ LEGACY_RUNNER_NAMES = frozenset(
 
 LEGACY_RULE_FILES = frozenset({"figureitout.mdc"})
 
-CURSOR_PATHS = (
-    ".cursor/skills/run-forrest-run/SKILL.md",
-    ".cursor/rules/run-forrest-run.mdc",
-)
-
-DEVIN_PATHS = (
-    ".devin/global_rules.md",
-    ".devin/rules/run-forrest-run.md",
-    ".devin/skills/run-forrest-run/SKILL.md",
-    ".agents/skills/run-forrest-run/SKILL.md",
-)
-
-OPENCLAW_PATHS = (
-    "AGENTS.md",
-    ".agents/skills/run-forrest-run/SKILL.md",
-)
+# Five platform variants — all must carry the mandatory first message.
+PLATFORM_VARIANTS: dict[str, tuple[str, ...]] = {
+    "cursor_local": (
+        ".cursor/skills/run-forrest-run/SKILL.md",
+        ".cursor/rules/run-forrest-run.mdc",
+    ),
+    "cursor_cloud": (
+        "AGENTS.md",
+        ".cursor/rules/run-forrest-run.mdc",
+        ".cursor/skills/run-forrest-run/SKILL.md",
+    ),
+    "devin_local": (
+        ".config/devin/AGENTS.md",
+        ".devin/global_rules.md",
+        ".devin/rules/run-forrest-run.md",
+    ),
+    "devin_cloud": (
+        "AGENTS.md",
+        ".devin/global_rules.md",
+        ".devin/rules/run-forrest-run.md",
+        ".devin/skills/run-forrest-run/SKILL.md",
+    ),
+    "openclaw": (
+        "AGENTS.md",
+        ".agents/skills/run-forrest-run/SKILL.md",
+        ".openclaw/workspace/AGENTS.md",
+    ),
+}
 
 
 def _read(path: Path) -> str:
@@ -55,63 +67,22 @@ def _has_first_message(text: str) -> bool:
     return INVOKE in text and "warrant" in text.lower() and ICON in text
 
 
-def _cursor_ok(root: Path) -> list[str]:
+def _check_paths(base: Path, rels: tuple[str, ...], label: str) -> list[str]:
     errors: list[str] = []
-    skill = root / CURSOR_PATHS[0]
-    rule = root / CURSOR_PATHS[1]
-    if not skill.exists():
-        errors.append(f"missing {CURSOR_PATHS[0]}")
-    else:
-        body = _read(skill)
-        if "alwaysApply: true" not in body:
-            errors.append("cursor skill missing alwaysApply: true")
+    for rel in rels:
+        p = base / rel
+        if not p.exists():
+            errors.append(f"{label}: missing {rel}")
+            continue
+        body = _read(p)
         if not _has_first_message(body):
-            errors.append("cursor skill missing mandatory first message")
-    if not rule.exists():
-        errors.append(f"missing {CURSOR_PATHS[1]}")
-    else:
-        body = _read(rule)
-        if "alwaysApply: true" not in body:
-            errors.append("cursor rule missing alwaysApply: true")
-        if not _has_first_message(body):
-            errors.append("cursor rule missing mandatory first message")
-    return errors
-
-
-def _devin_ok(root: Path) -> list[str]:
-    errors: list[str] = []
-    for rel in DEVIN_PATHS:
-        if not (root / rel).exists():
-            errors.append(f"missing {rel}")
-    global_rules = _read(root / ".devin/global_rules.md")
-    if global_rules and not _has_first_message(global_rules):
-        errors.append("devin global_rules missing mandatory first message")
-    devin_rule = _read(root / ".devin/rules/run-forrest-run.md")
-    if devin_rule:
-        if "trigger: always_on" not in devin_rule.replace(" ", ""):
-            if "trigger: always_on" not in devin_rule:
-                errors.append("devin rule missing trigger: always_on")
-        if not _has_first_message(devin_rule):
-            errors.append("devin rule missing mandatory first message")
-    agents = _read(root / "AGENTS.md")
-    if "Run, Forrest, Run! (NON-NEGOTIABLE)" not in agents:
-        errors.append("AGENTS.md missing Run Forrest Run NON-NEGOTIABLE block")
-    if not _has_first_message(agents):
-        errors.append("AGENTS.md missing mandatory first message")
-    return errors
-
-
-def _openclaw_ok(root: Path) -> list[str]:
-    errors: list[str] = []
-    for rel in OPENCLAW_PATHS:
-        if not (root / rel).exists():
-            errors.append(f"missing {rel}")
-    agents = _read(root / "AGENTS.md")
-    if "Run, Forrest, Run! (NON-NEGOTIABLE)" not in agents:
-        errors.append("openclaw: AGENTS.md missing NON-NEGOTIABLE block")
-    skill = _read(root / ".agents/skills/run-forrest-run/SKILL.md")
-    if skill and not _has_first_message(skill):
-        errors.append("openclaw skill missing mandatory first message")
+            errors.append(f"{label}: {rel} missing mandatory first message")
+        if rel.endswith("SKILL.md") and "alwaysApply: true" not in body:
+            errors.append(f"{label}: {rel} missing alwaysApply: true")
+        if rel.endswith("run-forrest-run.mdc") and "alwaysApply: true" not in body:
+            errors.append(f"{label}: {rel} missing alwaysApply: true")
+        if rel.endswith("run-forrest-run.md") and "trigger: always_on" not in body:
+            errors.append(f"{label}: {rel} missing trigger: always_on")
     return errors
 
 
@@ -139,22 +110,54 @@ def _legacy_absent(root: Path) -> list[str]:
     return errors
 
 
-def verify_session_bootstrap(project_root: Path | str | None = None) -> dict:
-    """Return {ok, hosts: {cursor, devin, openclaw}, errors, first_message}."""
+def verify_all_platforms(
+    project_root: Path | str | None = None,
+    home_root: Path | str | None = None,
+) -> dict:
+    """Verify cursor local/cloud, devin local/cloud, openclaw bootstrap."""
     root = Path(project_root or Path.cwd()).resolve()
-    cursor_err = _cursor_ok(root)
-    devin_err = _devin_ok(root)
-    openclaw_err = _openclaw_ok(root)
+    home = Path(home_root or Path.home()).resolve()
+    platforms: dict[str, dict] = {}
+    all_errors: list[str] = []
+
+    checks = {
+        "cursor_local": _check_paths(root, PLATFORM_VARIANTS["cursor_local"], "cursor_local")
+        + _check_paths(home, (".cursor/skills/run-forrest-run/SKILL.md",), "cursor_local_home"),
+        "cursor_cloud": _check_paths(root, PLATFORM_VARIANTS["cursor_cloud"], "cursor_cloud"),
+        "devin_local": _check_paths(home, PLATFORM_VARIANTS["devin_local"], "devin_local"),
+        "devin_cloud": _check_paths(root, PLATFORM_VARIANTS["devin_cloud"], "devin_cloud"),
+        "openclaw": _check_paths(root, PLATFORM_VARIANTS["openclaw"][:2], "openclaw")
+        + _check_paths(home, (".openclaw/workspace/AGENTS.md",), "openclaw_home"),
+    }
+
+    for name, errs in checks.items():
+        platforms[name] = {"ok": not errs, "errors": errs}
+        all_errors.extend(errs)
+
     legacy_err = _legacy_absent(root)
-    all_errors = legacy_err + cursor_err + devin_err + openclaw_err
+    all_errors.extend(legacy_err)
+
     return {
         "ok": not all_errors,
         "first_message": FIRST_MESSAGE,
-        "hosts": {
-            "cursor": {"ok": not cursor_err, "errors": cursor_err},
-            "devin": {"ok": not devin_err, "errors": devin_err},
-            "openclaw": {"ok": not openclaw_err, "errors": openclaw_err},
-        },
+        "platforms": platforms,
         "legacy_clean": not legacy_err,
         "errors": all_errors,
+    }
+
+
+def verify_session_bootstrap(project_root: Path | str | None = None) -> dict:
+    """Backward-compatible wrapper."""
+    result = verify_all_platforms(project_root=project_root)
+    return {
+        "ok": result["ok"],
+        "first_message": result["first_message"],
+        "hosts": {
+            "cursor": result["platforms"].get("cursor_local", {}),
+            "devin": result["platforms"].get("devin_cloud", {}),
+            "openclaw": result["platforms"].get("openclaw", {}),
+        },
+        "platforms": result["platforms"],
+        "legacy_clean": result["legacy_clean"],
+        "errors": result["errors"],
     }

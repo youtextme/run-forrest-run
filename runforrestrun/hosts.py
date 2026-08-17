@@ -195,14 +195,16 @@ def extra_instruction_files(host: Host, project_root: Path) -> dict[str, str]:
     files: dict[str, str] = {}
     if host.id in {"codex", "aider", "goose", "amp", "gemini", "cli-python", "agents-spec", "devin", "openclaw"}:
         files[str(root / "AGENTS.md")] = "agents"
-    if host.id == "cursor":
-        files[str(root / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
-        files[str(home / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
     if host.id == "devin":
         files[str(root / ".devin" / "global_rules.md")] = "devin_global"
         files[str(root / ".devin" / "rules" / "run-forrest-run.md")] = "devin_rule"
         files[str(home / ".devin" / "global_rules.md")] = "devin_global"
         files[str(home / ".devin" / "rules" / "run-forrest-run.md")] = "devin_rule"
+        files[str(home / ".config" / "devin" / "AGENTS.md")] = "agents"
+    if host.id == "cursor":
+        files[str(root / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
+        files[str(home / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
+        files[str(home / ".cursor" / "skills" / "run-forrest-run" / "SKILL.md")] = "cursor_home_skill"
     if host.id == "vscode" or host.id == "copilot":
         files[str(root / ".github" / "copilot-instructions.md")] = "copilot"
     if host.id == "aider":

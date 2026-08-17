@@ -22,7 +22,7 @@ from runforrestrun.session_bootstrap import (
     FIRST_MESSAGE,
     FIRST_MESSAGE_LINE1,
     FIRST_MESSAGE_LINE2,
-    verify_session_bootstrap,
+    verify_all_platforms,
 )
 from runforrestrun.voice import new_host, two_lines
 
@@ -305,6 +305,8 @@ def install_into_hosts(
                 _write(p, DEVIN_GLOBAL_RULES)
             elif kind == "devin_rule":
                 _write(p, DEVIN_RULE)
+            elif kind == "cursor_home_skill":
+                _write(p, skill)
             installed.append(path)
         if host.id not in prev_ids and previous:
             voices.append(new_host(host.title))
@@ -325,7 +327,7 @@ def install_into_hosts(
         state["shim"] = shim
         hosts_state_path().write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     github = install_github_credentials(project_root=root)
-    bootstrap = verify_session_bootstrap(root)
+    bootstrap = verify_all_platforms(project_root=root, home_root=Path.home())
     return {
         "ok": True and bootstrap["ok"],
         "canonical": str(canonical),

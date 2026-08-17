@@ -28,7 +28,7 @@ def test_opening_uses_movie_spelling_forrest():
     text = opening(noun="the login bug", run_id="abc123", autonomous=True)
     assert "Run, Forrest, Run!" in text
     assert "invoked" in text.lower()
-    assert "abc123" in text
+    assert "warrant" in text.lower()
     assert "Forest," not in text.replace("Forrest", "")
 
 
@@ -63,6 +63,7 @@ def test_install_writes_canonical_and_agent_skills(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("RUN_FORREST_HOME", str(tmp_path / "rfr"))
+    monkeypatch.setenv("RUN_FORREST_SKIP_SYNC", "1")
     project = tmp_path / "proj"
     project.mkdir()
     result = install_into_hosts(project_root=project, packaged=Path(__file__).resolve().parents[1])
