@@ -91,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.sync:
             result = install_into_hosts(packaged=packaged)
-            result["voice"] = two_lines(
+            voice = two_lines(
                 "Synced canonical brain from GitHub main. Every host got the latest skill.",
                 f"Hosts: {', '.join(result.get('hosts') or [])}. Reload your IDE.",
             )
