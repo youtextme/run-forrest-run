@@ -26,6 +26,9 @@ Documentation = "https://github.com/youtextme/run-forrest-run#readme"
 where = ["."]
 include = ["runforrestrun*"]
 
+[tool.setuptools.package-data]
+runforrestrun = ["*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

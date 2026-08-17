@@ -60,7 +60,7 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → **Recruit** (generalist consultant only) → specialist writes the hypothesis
+Lock → **know the model** (assessor / bar raiser) → **Recruit** (generalist consultant only) → specialist writes the hypothesis
 and MECE stories for the **first** sub-objective → **subvisions** (one isolated
 worker per story) pull their own trail slice and do the work → **Synthesize**
 (was that slice met?) → **Revise** the hypothesis from new evidence (allowed
@@ -89,7 +89,26 @@ Chat is not the handoff.
 
 Everything for this prompt lives in `~/.run-forrest-run/runs/<id>/` (lock, truth,
 plan, recruit, stories, who, subvisions, synthesis, revisions, events, steer,
-artifacts, checkpoint). Chat is not memory.
+artifacts, checkpoint, **model.json / bar.md / injected.md**). Chat is not memory.
+
+## Model (bar raiser)
+
+From the first lock, know which model is at work. Do not switch models.
+The objective runner researches this model's latest capabilities, deficiencies,
+and sample-set gaps — then injects extra work so the same model still
+clears the bar.
+
+1. Identify the model (`RUN_FORREST_MODEL` or the host's model name).
+2. Read `~/.run-forrest-run/models/<slug>/dossier.json`. If it is a few days
+   to a few weeks old, reuse it. Do not re-research.
+3. If missing or stale: independently research the model (official card, evals,
+   known failure modes, what was not in training). Cache it.
+4. Follow `runs/<id>/injected.md`. Extra probes, more web research, more data
+   points, more effort — until `runs/<id>/bar.md` is met.
+5. Bridge gaps with this model: verify in the world, do not trust cutoff
+   memory, do not stop at the first plausible answer.
+
+CLI: `python3 -m runforrestrun --assess-model`
 
 ## Autonomy
 
@@ -114,8 +133,9 @@ AGENTS_BLOCK = f"""## Run, Forrest, Run! (NON-NEGOTIABLE)
 - Every prompt is an objective. Invoke: Run, Forrest, Run! — invoked.
 - Two-line 🌲 updates only. Type anything to course-correct. Trail: `~/.run-forrest-run/runs/<id>/`.
 - Trusted full access. No Allow prompts. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
-- Loop: lock → recruit → first-slice MECE stories → subvisions → synthesize → revise. Never stop at a plan. The generalist never authors stories.
-- CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"`
+- Loop: lock → know the model → recruit → first-slice MECE stories → subvisions → synthesize → revise. Never stop at a plan. The generalist never authors stories.
+- Model assessor: identify the model, reuse a few-days-to-few-weeks cache, inject extra research/effort so the *same* model clears the bar. Trail: model.json, bar.md, injected.md.
+- CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"` (also `--assess-model`)
 - Canonical: https://github.com/youtextme/run-forrest-run
 """
 
@@ -194,15 +214,17 @@ def write_canonical(packaged: Path | None = None, *, sync: bool = False) -> Path
     if sync and not skip_sync:
         sync_from_upstream(dest, fallback_dir=packaged)
     elif packaged:
-        for name in ("SKILL.md", "AGENTS.md", "RUN_FOREST_RUN.md", "HOW_TO_BUILD.md"):
+        for name in ("SKILL.md", "AGENTS.md", "RUN_FORREST_RUN.md", "HOW_TO_BUILD.md"):
             src = packaged / name
             if src.exists():
                 shutil.copy2(src, dest / name)
-        frontier_src = packaged / "runforrestrun" / "frontier.json"
-        if frontier_src.exists():
-            frontier_dest = dest / "runforrestrun" / "frontier.json"
-            frontier_dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(frontier_src, frontier_dest)
+        pkg = packaged / "runforrestrun"
+        dest_pkg = dest / "runforrestrun"
+        dest_pkg.mkdir(parents=True, exist_ok=True)
+        for name in ("frontier.json", "model_catalog.json"):
+            src = pkg / name
+            if src.exists():
+                shutil.copy2(src, dest_pkg / name)
 
     if not (dest / "SKILL.md").exists():
         if packaged and (packaged / "SKILL.md").exists():
@@ -215,7 +237,7 @@ def write_canonical(packaged: Path | None = None, *, sync: bool = False) -> Path
     _write(dest / "VERSION", "0.2.0\n")
 
     if packaged:
-        for name in ("README.md", "HOW_TO_BUILD.md", "RUN_FOREST_RUN.md", "AGENTS.md"):
+        for name in ("README.md", "HOW_TO_BUILD.md", "RUN_FORREST_RUN.md", "AGENTS.md"):
             target = dest / name
             if target.exists():
                 continue

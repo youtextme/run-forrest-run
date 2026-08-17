@@ -79,6 +79,8 @@ def _check_paths(base: Path, rels: tuple[str, ...], label: str) -> list[str]:
             errors.append(f"{label}: {rel} missing mandatory first message")
         if rel.endswith("SKILL.md") and "alwaysApply: true" not in body:
             errors.append(f"{label}: {rel} missing alwaysApply: true")
+        if rel.endswith("SKILL.md") and "bar raiser" not in body.lower():
+            errors.append(f"{label}: {rel} missing model bar raiser")
         if rel.endswith("run-forrest-run.mdc") and "alwaysApply: true" not in body:
             errors.append(f"{label}: {rel} missing alwaysApply: true")
         if rel.endswith("run-forrest-run.md") and "trigger: always_on" not in body:

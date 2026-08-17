@@ -23,6 +23,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--watch", action="store_true", help="Re-scan for newly installed IDEs/CLIs")
     p.add_argument("--sync", action="store_true", help="Pull latest canonical from GitHub main and re-default all hosts")
     p.add_argument("--status", action="store_true", help="Show canonical home and hosts")
+    p.add_argument(
+        "--assess-model",
+        action="store_true",
+        help="Identify the model at work, reuse or refresh the dossier, print the bar raiser",
+    )
+    p.add_argument(
+        "--force-research",
+        action="store_true",
+        help="Ignore a fresh model-assessor cache and research again",
+    )
     p.add_argument("--steer", metavar="RUN_ID", help="Append a course-correction to a trail")
     p.add_argument("--message", default="", help="Steer or story text")
     p.add_argument("--complete-story", metavar="RUN_ID", help="Mark a story done on a trail")
@@ -126,14 +136,43 @@ def main(argv: list[str] | None = None) -> int:
             print(voice)
         return 0 if result.get("ok") else 1
 
-    if args.status:
-        from runforrestrun.hosts import detect
-        from runforrestrun.paths import home, hosts_state_path
+    if args.assess_model:
+        from runforrestrun.assessor import assess_model
 
+        assessment = assess_model(force=args.force_research)
+        payload = assessment.as_dict()
+        if args.json:
+            print(json.dumps(payload, indent=2, default=str))
+        else:
+            print(assessment.voice)
+            print(f"\ncache: {assessment.cache_path}")
+            print(f"bar: {assessment.bar.get('min_score')}")
+            print("injected:")
+            for prompt in assessment.injected:
+                print(f"  - {prompt[:200]}")
+        return 0
+
+    if args.status:
+        from runforrestrun.assessor import detect_model, load_cached_dossier
+        from runforrestrun.hosts import detect
+        from runforrestrun.paths import home, hosts_state_path, models_dir
+
+        ident = detect_model()
+        cached, age = load_cached_dossier(ident.slug)
         payload = {
             "home": str(home()),
             "hosts_file": str(hosts_state_path()),
             "detected": [h.id for h in detect()],
+            "model": {
+                "raw": ident.raw,
+                "slug": ident.slug,
+                "family": ident.family,
+                "variant": ident.variant,
+                "source": ident.source,
+                "cache_age_days": age,
+                "cache_fresh": bool(cached) and age is not None,
+                "models_dir": str(models_dir()),
+            },
         }
         if hosts_state_path().exists():
             payload["state"] = json.loads(hosts_state_path().read_text(encoding="utf-8"))
