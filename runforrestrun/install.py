@@ -14,6 +14,7 @@ from runforrestrun.hosts import (
     skill_destinations,
 )
 from runforrestrun.frontier import refresh_frontier
+from runforrestrun.github_credentials import install_github_credentials
 from runforrestrun.paths import canonical_dir, ensure_layout, hosts_state_path, home
 from runforrestrun.upstream import sync_from_upstream
 from runforrestrun.voice import new_host, two_lines
@@ -230,6 +231,7 @@ def install_into_hosts(
         installed.append(shim)
         state["shim"] = shim
         hosts_state_path().write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+    github = install_github_credentials(project_root=root)
     return {
         "ok": True,
         "canonical": str(canonical),
@@ -238,6 +240,7 @@ def install_into_hosts(
         "sync": state.get("sync"),
         "voices": voices,
         "home": str(home()),
+        "github": github,
     }
 
 

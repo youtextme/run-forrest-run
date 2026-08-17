@@ -17,6 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("objective", nargs="?", help="Objective to run")
     p.add_argument("--install", action="store_true", help="Detect hosts and install as the default")
+    p.add_argument("--install-github", action="store_true", help="Install GitHub PAT for Cursor, Devin, OpenClaw, and all agents")
     p.add_argument("--watch", action="store_true", help="Re-scan for newly installed IDEs/CLIs")
     p.add_argument("--sync", action="store_true", help="Pull latest canonical from GitHub main and re-default all hosts")
     p.add_argument("--status", action="store_true", help="Show canonical home and hosts")
@@ -36,6 +37,21 @@ def _packaged() -> Path:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     packaged = _packaged()
+
+    if args.install_github:
+        from runforrestrun.github_credentials import install_github_credentials
+        from runforrestrun.voice import two_lines
+
+        result = install_github_credentials(project_root=Path.cwd())
+        voice = two_lines(
+            f"GitHub PAT installed for Cursor, Devin, OpenClaw. Account: {result.get('account', 'youtextme')}.",
+            "Source ~/.config/agent/github.env before gh or git push. Never commit the token.",
+        )
+        if args.json:
+            print(json.dumps({**result, "voice": voice}, indent=2, default=str))
+        else:
+            print(voice)
+        return 0 if result.get("ok") else 1
 
     if args.install or args.watch or args.sync:
         from runforrestrun.install import install_into_hosts, watch_once
