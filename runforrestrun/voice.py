@@ -69,6 +69,15 @@ def learned_capability(*, title: str, why_world: str) -> str:
     )
 
 
+def cached_skill_voice(*, slugs: list[str], run_id: str, best: str = "") -> str:
+    names = ", ".join(f"`{s}`" for s in slugs[:4]) or "cached"
+    method = f" Best method: {best}." if best else ""
+    return two_lines(
+        f"Cached skill {names} matches this pattern. I'll run it from cache — no rediscovery tax.{method}",
+        f"Type to steer. Trail `{run_id}` has the catalog. Subskills stay on disk for the next similar prompt.",
+    )
+
+
 def new_host(title: str) -> str:
     return two_lines(
         f"New runner on this machine: {title}. Installing Run, Forrest, Run as the default.",

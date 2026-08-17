@@ -22,6 +22,7 @@ pytest
 | Model assessor / catalog | [`runforrestrun/assessor.py`](runforrestrun/assessor.py), [`runforrestrun/model_catalog.json`](runforrestrun/model_catalog.json) | SKILL “Model (bar raiser)”, README disk layout |
 | Community loop catalog | [`runforrestrun/frontier.json`](runforrestrun/frontier.json) | Keep entries as methods, not tenets |
 | CLI flags | [`runforrestrun/__main__.py`](runforrestrun/__main__.py) | README Commands table |
+| Cached skills / patterns | [`runforrestrun/model_aware.py`](runforrestrun/model_aware.py) | [`runforrestrun/patterns.py`](runforrestrun/patterns.py), [`runforrestrun/cached_skills.py`](runforrestrun/cached_skills.py) |
 
 ## Design constraints (please keep)
 
@@ -36,7 +37,7 @@ pytest
 ## Pull requests
 
 - One focused change per PR when possible.
-- Include or update tests in [`tests/test_platform.py`](tests/test_platform.py).
+- Include or update tests in [`tests/`](tests/) (`test_platform.py`, `test_model_aware.py`, …).
 - Run `pytest` before opening.
 - Update README if user-visible behavior changes.
 

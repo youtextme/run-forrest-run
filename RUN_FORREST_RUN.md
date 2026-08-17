@@ -15,6 +15,8 @@ Tenets (closed — do not add a fourth):
 Voice is two lines, forest icon, invite to course-correct.
 Storage is `~/.run-forrest-run/`. Chat is not memory.
 The observer abstracts the person and keeps the pattern.
+Model-aware stores those patterns, reviews them, and mints cached
+subskills from proven access so the next similar prompt is cheap.
 The platform asks before a community PR, and the operator keeps the credit.
 
 The runner is model-aware from the first lock. A **model assessor**

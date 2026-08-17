@@ -13,7 +13,8 @@ Methods. Tenets stay in [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md).
 7. Capability proposals that are rare and credited.
 8. Model assessor: detect the model, cache a dossier (few days–few weeks),
    inject same-model bridges until the bar is met.
-9. Then the skill with `alwaysApply: true` and `AGENTS.md` for hosts without that flag.
+9. Model-aware: store every prompt as a pattern; review which method was cheapest; mint a cached subskill after proven access (Slack, MCP, …) so the next similar run cheap-pings instead of rediscovering.
+10. Then the skill with `alwaysApply: true` and `AGENTS.md` for hosts without that flag.
 
 ## Default loop (method, not a tenet)
 
@@ -27,7 +28,7 @@ Every objective opens an **initiative**:
 6. **Subvisions** (`runs/<id>/subvisions/<story>/`) are isolated workers. Each pulls only its payload. Partitions are mutually exclusive and collectively exhaustive of the current slice.
 7. After the slice, **synthesize**: was it met? Then **revise** the hypothesis. Revision is allowed until the last atom, including a full rethink. The human may add stories; the specialist re-checks MECE.
 
-Modules: `signature.py`, `recruitment.py`, `stories.py`, `revision.py`, `synthesis.py`, `initiative.py`.
+Modules: `signature.py`, `recruitment.py`, `stories.py`, `revision.py`, `synthesis.py`, `initiative.py`. Cheap-ping: `patterns.py`, `cached_skills.py`, `model_aware.py`. Assessor: `assessor.py`.
 
 ## One-command default
 

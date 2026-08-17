@@ -29,7 +29,7 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → **know the model** (assessor / bar raiser) → **Recruit** (generalist consultant only) → specialist writes the hypothesis
+Lock → **know the model** (assessor / bar raiser) → cheap-ping cached skills → **Recruit** (generalist consultant only) → specialist writes the hypothesis
 and MECE stories for the **first** sub-objective → **subvisions** (one isolated
 worker per story) pull their own trail slice and do the work → **Synthesize**
 (was that slice met?) → **Revise** the hypothesis from new evidence (allowed
@@ -78,6 +78,23 @@ clears the bar.
    memory, do not stop at the first plausible answer.
 
 CLI: `python3 -m runforrestrun --assess-model`
+
+## Model-aware (cached skills)
+
+The model does not remember Slack (or GitHub, or an MCP server) across runs.
+This machine does. Before probing an access path, cheap-ping:
+
+- `~/.run-forrest-run/skills/catalog.json`
+- `~/.run-forrest-run/skills/CACHED_SKILLS.md`
+- `~/.run-forrest-run/patterns/index.json`
+- `~/.run-forrest-run/model-aware/mcp.json`
+
+If a cached subskill matches (`rfr-slack`, `rfr-github`, …), **run it from cache**.
+Do not rediscover auth or layout. After you prove a *new* access path:
+
+`python -m runforrestrun --learned-access SURFACE --method mcp --run-id <trail>`
+
+That mints a subskill subsequent runs will see. Review and improve with `--learn`.
 
 ## Autonomy
 

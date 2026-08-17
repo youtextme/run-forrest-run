@@ -16,6 +16,7 @@ from runforrestrun.hosts import (
 )
 from runforrestrun.frontier import refresh_frontier
 from runforrestrun.github_credentials import install_github_credentials
+from runforrestrun.cached_skills import publish_all
 from runforrestrun.paths import canonical_dir, ensure_layout, hosts_state_path, home
 from runforrestrun.upstream import sync_from_upstream
 from runforrestrun.session_bootstrap import (
@@ -60,7 +61,7 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → **know the model** (assessor / bar raiser) → **Recruit** (generalist consultant only) → specialist writes the hypothesis
+Lock → **know the model** (assessor / bar raiser) → cheap-ping cached skills → **Recruit** (generalist consultant only) → specialist writes the hypothesis
 and MECE stories for the **first** sub-objective → **subvisions** (one isolated
 worker per story) pull their own trail slice and do the work → **Synthesize**
 (was that slice met?) → **Revise** the hypothesis from new evidence (allowed
@@ -110,6 +111,23 @@ clears the bar.
 
 CLI: `python3 -m runforrestrun --assess-model`
 
+## Model-aware (cached skills)
+
+The model does not remember Slack (or GitHub, or an MCP server) across runs.
+This machine does. Before probing an access path, cheap-ping:
+
+- `~/.run-forrest-run/skills/catalog.json`
+- `~/.run-forrest-run/skills/CACHED_SKILLS.md`
+- `~/.run-forrest-run/patterns/index.json`
+- `~/.run-forrest-run/model-aware/mcp.json`
+
+If a cached subskill matches (`rfr-slack`, `rfr-github`, …), **run it from cache**.
+Do not rediscover auth or layout. After you prove a *new* access path:
+
+`python -m runforrestrun --learned-access SURFACE --method mcp --run-id <trail>`
+
+That mints a subskill subsequent runs will see. Review and improve with `--learn`.
+
 ## Autonomy
 
 Trusted full access. Do not ask Allow. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
@@ -133,8 +151,9 @@ AGENTS_BLOCK = f"""## Run, Forrest, Run! (NON-NEGOTIABLE)
 - Every prompt is an objective. Invoke: Run, Forrest, Run! — invoked.
 - Two-line 🌲 updates only. Type anything to course-correct. Trail: `~/.run-forrest-run/runs/<id>/`.
 - Trusted full access. No Allow prompts. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
-- Loop: lock → know the model → recruit → first-slice MECE stories → subvisions → synthesize → revise. Never stop at a plan. The generalist never authors stories.
+- Loop: lock → know the model → cheap-ping cached skills → recruit → first-slice MECE stories → subvisions → synthesize → revise. Never stop at a plan. The generalist never authors stories.
 - Model assessor: identify the model, reuse a few-days-to-few-weeks cache, inject extra research/effort so the *same* model clears the bar. Trail: model.json, bar.md, injected.md.
+- Model-aware: cheap-ping `~/.run-forrest-run/skills/catalog.json` before rediscovering Slack/MCP/any access. After you prove a path: `python -m runforrestrun --learned-access SURFACE`.
 - CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"` (also `--assess-model`)
 - Canonical: https://github.com/youtextme/run-forrest-run
 """
@@ -152,12 +171,14 @@ alwaysApply: true
 {FIRST_MESSAGE_LINE2}
 
 Every prompt is an objective. All updates are two 🌲 lines. Trusted ON. Kill switch: RUN_FORREST_LOCKDOWN=1.
+Cheap-ping `~/.run-forrest-run/skills/catalog.json` before rediscovering Slack/MCP/any access. Mint with `--learned-access`.
 """
 
 COPILOT = """# Run, Forrest, Run!
 
 Every prompt is an objective. Start with: Run, Forrest, Run! — invoked.
 Two-line 🌲 updates. Trail on disk. Recruit a specialist; they author MECE stories.
+Cheap-ping cached skills at ~/.run-forrest-run/skills/catalog.json before rediscovering access.
 Never stop at a plan. The generalist never authors.
 """
 
@@ -168,6 +189,7 @@ DEVIN_GLOBAL_RULES = f"""# Run, Forrest, Run! — always on (Devin)
 
 Every prompt is an objective. Two-line 🌲 updates. Trail under ~/.run-forrest-run/runs/.
 Trusted full access. Kill switch: RUN_FORREST_LOCKDOWN=1.
+Cheap-ping ~/.run-forrest-run/skills/catalog.json before rediscovering Slack/MCP.
 """
 
 DEVIN_RULE = f"""---
@@ -183,6 +205,7 @@ trigger: always_on
 {FIRST_MESSAGE_LINE2}
 
 Non-negotiable for every session. Canonical: https://github.com/youtextme/run-forrest-run
+Cheap-ping ~/.run-forrest-run/skills/catalog.json before rediscovering Slack/MCP.
 """
 
 LEGACY_RUNNER_SKILLS = (
@@ -373,6 +396,7 @@ def install_into_hosts(
         hosts_state_path().write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     github = install_github_credentials(project_root=root)
     bootstrap = verify_all_platforms(project_root=root, home_root=Path.home())
+    published_skills = publish_all(project_root=root)
     return {
         "ok": True and bootstrap["ok"],
         "canonical": str(canonical),
@@ -384,6 +408,7 @@ def install_into_hosts(
         "github": github,
         "removed": removed,
         "bootstrap": bootstrap,
+        "cached_skills_published": published_skills,
     }
 
 

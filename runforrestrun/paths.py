@@ -37,6 +37,21 @@ def platform_dir() -> Path:
     return home() / "platform"
 
 
+def patterns_dir() -> Path:
+    """Stored patterns — subsequent runs cheap-ping these instead of rediscovering."""
+    return home() / "patterns"
+
+
+def skills_dir() -> Path:
+    """Cached subskills minted from proven access (Slack, MCP, …)."""
+    return home() / "skills"
+
+
+def model_aware_dir() -> Path:
+    """Model gaps, MCP inventory, capability catalog."""
+    return home() / "model-aware"
+
+
 def hosts_state_path() -> Path:
     return home() / "hosts.json"
 
@@ -58,6 +73,9 @@ def ensure_layout() -> Path:
         observations_dir(),
         models_dir(),
         platform_dir() / "proposals",
+        patterns_dir(),
+        skills_dir(),
+        model_aware_dir(),
         home() / "preferences",
     ):
         path.mkdir(parents=True, exist_ok=True)
