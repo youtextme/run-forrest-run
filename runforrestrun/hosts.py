@@ -199,8 +199,10 @@ def extra_instruction_files(host: Host, project_root: Path) -> dict[str, str]:
         files[str(root / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
         files[str(home / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
     if host.id == "devin":
-        files[str(root / ".devin" / "instructions.md")] = "devin"
-        files[str(home / ".devin" / "instructions.md")] = "devin"
+        files[str(root / ".devin" / "global_rules.md")] = "devin_global"
+        files[str(root / ".devin" / "rules" / "run-forrest-run.md")] = "devin_rule"
+        files[str(home / ".devin" / "global_rules.md")] = "devin_global"
+        files[str(home / ".devin" / "rules" / "run-forrest-run.md")] = "devin_rule"
     if host.id == "vscode" or host.id == "copilot":
         files[str(root / ".github" / "copilot-instructions.md")] = "copilot"
     if host.id == "aider":

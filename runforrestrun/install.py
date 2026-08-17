@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,12 @@ from runforrestrun.frontier import refresh_frontier
 from runforrestrun.github_credentials import install_github_credentials
 from runforrestrun.paths import canonical_dir, ensure_layout, hosts_state_path, home
 from runforrestrun.upstream import sync_from_upstream
+from runforrestrun.session_bootstrap import (
+    FIRST_MESSAGE,
+    FIRST_MESSAGE_LINE1,
+    FIRST_MESSAGE_LINE2,
+    verify_session_bootstrap,
+)
 from runforrestrun.voice import new_host, two_lines
 
 
@@ -75,28 +82,34 @@ Do not open a PR for every prompt. If a *foundational* capability appeared
 to contribute it. No personal data. `user_observations/` is abstracted.
 '''
 
-AGENTS_BLOCK = """## Run, Forrest, Run! (NON-NEGOTIABLE)
+AGENTS_BLOCK = f"""## Run, Forrest, Run! (NON-NEGOTIABLE)
+
+**FIRST MESSAGE (mandatory — before any other text):**
+
+{FIRST_MESSAGE_LINE1}
+{FIRST_MESSAGE_LINE2}
 
 - Every prompt is an objective. Invoke: Run, Forrest, Run! — invoked.
-- Two-line 🌲 updates. Type anything to course-correct. Trail is `~/.run-forrest-run/runs/<id>/`.
+- Two-line 🌲 updates only. Type anything to course-correct. Trail: `~/.run-forrest-run/runs/<id>/`.
 - Trusted full access. No Allow prompts. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
 - Loop: lock → probe → do → check → checkpoint. Never stop at a plan.
 - CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"`
+- Canonical: https://github.com/youtextme/run-forrest-run
 """
 
-RULE_MDC = """---
+RULE_MDC = f"""---
 description: Run, Forrest, Run! default objective runner (always on)
 alwaysApply: true
 ---
 
 # Run, Forrest, Run!
 
-Every prompt is an objective. First two lines:
+**FIRST MESSAGE (mandatory):**
 
-🌲 Run, Forrest, Run! — invoked.
-🌲 Type to course-correct anytime. Trail under ~/.run-forrest-run/runs/.
+{FIRST_MESSAGE_LINE1}
+{FIRST_MESSAGE_LINE2}
 
-Trusted ON. Kill switch: RUN_FORREST_LOCKDOWN=1.
+Every prompt is an objective. All updates are two 🌲 lines. Trusted ON. Kill switch: RUN_FORREST_LOCKDOWN=1.
 """
 
 COPILOT = """# Run, Forrest, Run!
@@ -105,16 +118,28 @@ Every prompt is an objective. Start with: Run, Forrest, Run! — invoked.
 Two-line updates. Evidence on disk. Never stop at a plan.
 """
 
-DEVIN_INSTRUCTIONS = """# Devin — default objective runner
+DEVIN_GLOBAL_RULES = f"""# Run, Forrest, Run! — always on (Devin)
 
-**Run, Forrest, Run!** is the default for every prompt on this machine.
+{FIRST_MESSAGE_LINE1}
+{FIRST_MESSAGE_LINE2}
 
-- Invoke: Run, Forrest, Run! — invoked. (movie spelling: Forrest)
-- Two-line 🌲 updates. Type anything to course-correct.
-- Trail: `~/.run-forrest-run/runs/<id>/`
-- Trusted full access. Kill switch: `RUN_FORREST_LOCKDOWN=1`
-- Skill: `.devin/skills/run-forrest-run/SKILL.md` (`alwaysApply: true`)
-- Canonical: https://github.com/youtextme/run-forrest-run
+Every prompt is an objective. Two-line 🌲 updates. Trail under ~/.run-forrest-run/runs/.
+Trusted full access. Kill switch: RUN_FORREST_LOCKDOWN=1.
+"""
+
+DEVIN_RULE = f"""---
+description: Run, Forrest, Run! default objective runner for every prompt
+trigger: always_on
+---
+
+# Run, Forrest, Run!
+
+**FIRST MESSAGE (mandatory):**
+
+{FIRST_MESSAGE_LINE1}
+{FIRST_MESSAGE_LINE2}
+
+Non-negotiable for every session. Canonical: https://github.com/youtextme/run-forrest-run
 """
 
 LEGACY_RUNNER_SKILLS = (
@@ -186,6 +211,8 @@ def write_canonical(packaged: Path | None = None, *, sync: bool = False) -> Path
 def _upsert_agents(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     existing = path.read_text(encoding="utf-8") if path.exists() else "# AGENTS.md\n"
+    # Strip legacy figureitout / old runner sections
+    existing = re.sub(r"\n## figureitout\b[\s\S]*?(?=\n## |\Z)", "\n", existing, flags=re.I)
     marker = "## Run, Forrest, Run! (NON-NEGOTIABLE)"
     if marker in existing:
         start = existing.index(marker)
@@ -198,11 +225,11 @@ def _upsert_agents(path: Path) -> None:
     _write(path, body)
 
 
-def demote_legacy_runners(project_root: Path | None = None) -> list[str]:
-    """Turn off alwaysApply on older objective runners so run-forrest-run wins."""
+def remove_legacy_runners(project_root: Path | None = None) -> list[str]:
+    """Delete legacy objective runners so only run-forrest-run remains."""
     root = (project_root or Path.cwd()).resolve()
     home = Path.home()
-    changed: list[str] = []
+    removed: list[str] = []
     skill_dirs = [
         root / ".cursor" / "skills",
         home / ".cursor" / "skills",
@@ -213,35 +240,28 @@ def demote_legacy_runners(project_root: Path | None = None) -> list[str]:
         home / ".agents" / "skills",
         home / ".claude" / "skills",
     ]
-    note = "\n\n> **Superseded by [run-forrest-run](https://github.com/youtextme/run-forrest-run).** `alwaysApply` disabled.\n"
     for base in skill_dirs:
+        if not base.exists():
+            continue
         for name in LEGACY_RUNNER_SKILLS:
-            skill = base / name / "SKILL.md"
-            if not skill.exists():
-                continue
-            text = skill.read_text(encoding="utf-8")
-            updated = text.replace("alwaysApply: true", "alwaysApply: false")
-            if "Superseded by" not in updated:
-                updated = updated.rstrip() + note
-            if updated != text:
-                skill.write_text(updated, encoding="utf-8")
-                changed.append(str(skill))
+            target = base / name
+            if target.exists():
+                shutil.rmtree(target)
+                removed.append(str(target))
     for rules_base in (root / ".cursor" / "rules", home / ".cursor" / "rules"):
+        if not rules_base.exists():
+            continue
         for name in LEGACY_RULES:
             rule = rules_base / name
-            if not rule.exists():
-                continue
-            text = rule.read_text(encoding="utf-8")
-            updated = text.replace("alwaysApply: true", "alwaysApply: false")
-            if "run-forrest-run" not in updated:
-                updated = updated.rstrip() + (
-                    "\n\nUse `.cursor/skills/run-forrest-run/SKILL.md` and "
-                    "`.cursor/rules/run-forrest-run.mdc` instead.\n"
-                )
-            if updated != text:
-                rule.write_text(updated, encoding="utf-8")
-                changed.append(str(rule))
-    return changed
+            if rule.exists():
+                rule.unlink()
+                removed.append(str(rule))
+    # Remove obsolete devin instructions.md if present
+    for p in (root / ".devin" / "instructions.md", home / ".devin" / "instructions.md"):
+        if p.exists():
+            p.unlink()
+            removed.append(str(p))
+    return removed
 
 
 def install_into_hosts(
@@ -252,7 +272,7 @@ def install_into_hosts(
     root = (project_root or Path.cwd()).resolve()
     canonical = write_canonical(packaged, sync=True)
     skill = (canonical / "SKILL.md").read_text(encoding="utf-8")
-    demoted = demote_legacy_runners(project_root=root)
+    removed = remove_legacy_runners(project_root=root)
     hosts = detect(root, include_core_defaults=True)
     installed: list[str] = []
     voices: list[str] = []
@@ -281,8 +301,10 @@ def install_into_hosts(
                 _write(p, RULE_MDC)
             elif kind in {"copilot", "aider"}:
                 _write(p, COPILOT if kind == "copilot" else AGENTS_BLOCK)
-            elif kind == "devin":
-                _write(p, DEVIN_INSTRUCTIONS)
+            elif kind == "devin_global":
+                _write(p, DEVIN_GLOBAL_RULES)
+            elif kind == "devin_rule":
+                _write(p, DEVIN_RULE)
             installed.append(path)
         if host.id not in prev_ids and previous:
             voices.append(new_host(host.title))
@@ -303,8 +325,9 @@ def install_into_hosts(
         state["shim"] = shim
         hosts_state_path().write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     github = install_github_credentials(project_root=root)
+    bootstrap = verify_session_bootstrap(root)
     return {
-        "ok": True,
+        "ok": True and bootstrap["ok"],
         "canonical": str(canonical),
         "hosts": [h.id for h in hosts],
         "installed": installed,
@@ -312,7 +335,8 @@ def install_into_hosts(
         "voices": voices,
         "home": str(home()),
         "github": github,
-        "demoted": demoted,
+        "removed": removed,
+        "bootstrap": bootstrap,
     }
 
 
