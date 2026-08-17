@@ -61,14 +61,55 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → split atoms → cheap-ping cached skills + known warrants → experiment unknowns → do → check →
-checkpoint under one run ID → two-line report. Never stop at a plan. Papercuts:
-one lookup, stop.
+Lock → **know the model** (assessor / bar raiser) → cheap-ping cached skills → **Recruit** (generalist consultant only) → specialist writes the hypothesis
+and MECE stories for the **first** sub-objective → **subvisions** (one isolated
+worker per story) pull their own trail slice and do the work → **Synthesize**
+(was that slice met?) → **Revise** the hypothesis from new evidence (allowed
+until the last atom, including a full rethink) → next slice.
+
+Never stop at a plan. Never let the generalist author the plan or the stories.
+Papercuts: one lookup, stop.
+
+## Recruit
+
+Spend the first effort on *who*, not *how*. A generalist consultant identifies
+specialists and scores them with the likelihood-ratio function on the trail
+(`recruit.json`). The winner gets a specific question and a peaked skill set.
+**They** author the hypothesis and the stories. Every story is assigned to a
+named recruit. Who-did-what lives in `who.md`.
+
+## Stories
+
+MECE for the current slice only — mutually exclusive partitions, collectively
+exhaustive of that slice. Spawn one subvision per story; each pulls only
+`subvisions/<id>/payload.json` plus lock/truth/recruit. The human may add
+stories (`add these N more stories: ...`). The specialist re-checks MECE.
+Chat is not the handoff.
 
 ## Trail
 
 Everything for this prompt lives in `~/.run-forrest-run/runs/<id>/` (lock, truth,
-plan, events, steer, artifacts, checkpoint). Chat is not memory.
+plan, recruit, stories, who, subvisions, synthesis, revisions, events, steer,
+artifacts, checkpoint, **model.json / bar.md / injected.md**). Chat is not memory.
+
+## Model (bar raiser)
+
+From the first lock, know which model is at work. Do not switch models.
+The objective runner researches this model's latest capabilities, deficiencies,
+and sample-set gaps — then injects extra work so the same model still
+clears the bar.
+
+1. Identify the model (`RUN_FORREST_MODEL` or the host's model name).
+2. Read `~/.run-forrest-run/models/<slug>/dossier.json`. If it is a few days
+   to a few weeks old, reuse it. Do not re-research.
+3. If missing or stale: independently research the model (official card, evals,
+   known failure modes, what was not in training). Cache it.
+4. Follow `runs/<id>/injected.md`. Extra probes, more web research, more data
+   points, more effort — until `runs/<id>/bar.md` is met.
+5. Bridge gaps with this model: verify in the world, do not trust cutoff
+   memory, do not stop at the first plausible answer.
+
+CLI: `python3 -m runforrestrun --assess-model`
 
 ## Model-aware (cached skills)
 
@@ -110,9 +151,10 @@ AGENTS_BLOCK = f"""## Run, Forrest, Run! (NON-NEGOTIABLE)
 - Every prompt is an objective. Invoke: Run, Forrest, Run! — invoked.
 - Two-line 🌲 updates only. Type anything to course-correct. Trail: `~/.run-forrest-run/runs/<id>/`.
 - Trusted full access. No Allow prompts. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
-- Loop: lock → cheap-ping cached skills → probe → do → check → checkpoint. Never stop at a plan.
+- Loop: lock → know the model → cheap-ping cached skills → recruit → first-slice MECE stories → subvisions → synthesize → revise. Never stop at a plan. The generalist never authors stories.
+- Model assessor: identify the model, reuse a few-days-to-few-weeks cache, inject extra research/effort so the *same* model clears the bar. Trail: model.json, bar.md, injected.md.
 - Model-aware: cheap-ping `~/.run-forrest-run/skills/catalog.json` before rediscovering Slack/MCP/any access. After you prove a path: `python -m runforrestrun --learned-access SURFACE`.
-- CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"`
+- CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"` (also `--assess-model`)
 - Canonical: https://github.com/youtextme/run-forrest-run
 """
 
@@ -135,8 +177,9 @@ Cheap-ping `~/.run-forrest-run/skills/catalog.json` before rediscovering Slack/M
 COPILOT = """# Run, Forrest, Run!
 
 Every prompt is an objective. Start with: Run, Forrest, Run! — invoked.
-Two-line updates. Evidence on disk. Never stop at a plan.
+Two-line 🌲 updates. Trail on disk. Recruit a specialist; they author MECE stories.
 Cheap-ping cached skills at ~/.run-forrest-run/skills/catalog.json before rediscovering access.
+Never stop at a plan. The generalist never authors.
 """
 
 DEVIN_GLOBAL_RULES = f"""# Run, Forrest, Run! — always on (Devin)
@@ -194,15 +237,17 @@ def write_canonical(packaged: Path | None = None, *, sync: bool = False) -> Path
     if sync and not skip_sync:
         sync_from_upstream(dest, fallback_dir=packaged)
     elif packaged:
-        for name in ("SKILL.md", "AGENTS.md", "RUN_FOREST_RUN.md", "HOW_TO_BUILD.md"):
+        for name in ("SKILL.md", "AGENTS.md", "RUN_FORREST_RUN.md", "HOW_TO_BUILD.md"):
             src = packaged / name
             if src.exists():
                 shutil.copy2(src, dest / name)
-        frontier_src = packaged / "runforrestrun" / "frontier.json"
-        if frontier_src.exists():
-            frontier_dest = dest / "runforrestrun" / "frontier.json"
-            frontier_dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(frontier_src, frontier_dest)
+        pkg = packaged / "runforrestrun"
+        dest_pkg = dest / "runforrestrun"
+        dest_pkg.mkdir(parents=True, exist_ok=True)
+        for name in ("frontier.json", "model_catalog.json"):
+            src = pkg / name
+            if src.exists():
+                shutil.copy2(src, dest_pkg / name)
 
     if not (dest / "SKILL.md").exists():
         if packaged and (packaged / "SKILL.md").exists():
@@ -212,10 +257,10 @@ def write_canonical(packaged: Path | None = None, *, sync: bool = False) -> Path
 
     _write(dest / "AGENTS.block.md", AGENTS_BLOCK)
     _write(dest / "rule.mdc", RULE_MDC)
-    _write(dest / "VERSION", "0.1.0\n")
+    _write(dest / "VERSION", "0.2.0\n")
 
     if packaged:
-        for name in ("README.md", "HOW_TO_BUILD.md", "RUN_FOREST_RUN.md", "AGENTS.md"):
+        for name in ("README.md", "HOW_TO_BUILD.md", "RUN_FORREST_RUN.md", "AGENTS.md"):
             target = dest / name
             if target.exists():
                 continue

@@ -1,0 +1,378 @@
+{
+  "updated_at": "2026-08-17",
+  "note": "AI-researcher prior on frontier models. The assessor refreshes from the web when the cache is older than a few days to a few weeks. Never treat this file as the last word.",
+  "ttl_days_default": 14,
+  "ttl_days_min": 3,
+  "ttl_days_max": 21,
+  "good_enough_score": 80,
+  "fast_variant_score": 88,
+  "families": {
+    "unknown": {
+      "vendor": "unknown",
+      "aliases": [],
+      "released": "",
+      "cutoff": "unknown — treat parametric memory as stale",
+      "latest": [
+        "Identity was not advertised. Assume a generic coding agent with a knowledge cutoff and a bias to stop at the first plausible answer."
+      ],
+      "strengths": [],
+      "deficiencies": [
+        {
+          "id": "identity-unknown",
+          "area": "self-knowledge",
+          "evidence": "No model name in env or host metadata.",
+          "bridge": "State uncertainty. Probe the world. Do not claim model-specific strengths."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Cutoff unknown.",
+          "bridge": "Live-fetch versions, APIs, and dates. Do not trust memory for current facts."
+        },
+        {
+          "id": "hallucination",
+          "area": "fabrication",
+          "evidence": "Unidentified models still invent APIs, file paths, and citations.",
+          "bridge": "Disconfirm claims against the repo and the web. Two independent sources for version/API facts."
+        },
+        {
+          "id": "under-effort",
+          "area": "stopping early",
+          "evidence": "Default decoding stops at a plausible draft.",
+          "bridge": "Keep working until the bar is evidenced. Extra research pass after the first draft."
+        }
+      ],
+      "research_gaps": [
+        "Whatever this host model was trained on is unknown — expand the sample set with live docs, tests, and current sources before concluding."
+      ],
+      "research_urls": []
+    },
+    "grok-4.6": {
+      "vendor": "xAI / SpaceXAI",
+      "aliases": [
+        "grok-4.6",
+        "grok 4.6",
+        "grok4.6",
+        "cursor-grok-4.6",
+        "grok-4-6"
+      ],
+      "released": "2026-08-12",
+      "cutoff": "January 2026 pretraining cutoff (model card)",
+      "latest": [
+        "Grok 4.6 (2026-08-12): long-running agents, knowledge work, and coding; fewer turns than Claude Opus 5 on long tasks.",
+        "Strong on GDPval-AA, AA-Briefcase, Harvey legal; Cursor IDE workflows after supplemental Cursor training.",
+        "Trails GPT-5.6 Sol on DeepSWE v1.1 (~65.9 vs ~73) and Terminal-Bench v3.0 (~26 vs ~34.6).",
+        "AA-Omniscience ~48.2% accuracy; ~65.7% non-hallucination rate when it does not know.",
+        "Context 500k tokens; list price doubles past ~200k tokens.",
+        "Not for autonomous high-stakes medicine/law/finance/safety-critical decisions."
+      ],
+      "strengths": [
+        "Knowledge-work and research fan-out",
+        "Long agentic sessions with fewer turns",
+        "In-editor coding (CursorBench) after Cursor supplemental training",
+        "Speed — high-fast variants finish much sooner than thinking-max peers"
+      ],
+      "deficiencies": [
+        {
+          "id": "swe-lag",
+          "area": "autonomous software engineering / terminal",
+          "evidence": "Loses DeepSWE and Terminal-Bench to GPT-5.6 Sol on xAI's own table. Fast variants skip terminal verification.",
+          "bridge": "Run the real commands and tests. Do not declare done from a compile or a plausible patch. Extra terminal probes; reproduce the failure; keep a failing-test-first loop."
+        },
+        {
+          "id": "hallucination",
+          "area": "factuality",
+          "evidence": "AA-Omniscience non-hallucination ~65.7% — it still invents when uncertain.",
+          "bridge": "Treat unsourced facts as hypotheses. Cheap-ping the world. Two independent live sources for APIs, versions, and dates."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Pretraining cutoff January 2026. Anything after that is not in the sample set.",
+          "bridge": "Web-research post-cutoff docs, changelogs, and GitHub. Expand the sample set with current data points before answering."
+        },
+        {
+          "id": "sycophancy",
+          "area": "honesty under pressure",
+          "evidence": "Model card: sycophancy and MASK-Rectified honesty regressed vs Grok 4.5.",
+          "bridge": "Prefer evidence over agreeing with the prompt. If the user is wrong, say so with a warrant."
+        },
+        {
+          "id": "under-effort",
+          "area": "fast-variant compute",
+          "evidence": "high-fast / lite lanes spend fewer tokens and stop at a first pass. Launch copy emphasizes fewer steps.",
+          "bridge": "Inject extra steps the fast lane would skip: second research pass, test run, disconfirmation, and a bar check. Same model, more work."
+        }
+      ],
+      "research_gaps": [
+        "Events, library versions, and papers after January 2026",
+        "Repo-specific conventions that were never in public training",
+        "Terminal-heavy workflows this model under-samples vs Sol",
+        "Safety-critical or regulated domains it is not intended to decide alone"
+      ],
+      "research_urls": [
+        "https://x.ai/news/grok-4-6",
+        "https://docs.x.ai/docs/models",
+        "https://media.x.ai/v1/website/card-4p6-4cd2dc57.pdf"
+      ]
+    },
+    "grok-4.5": {
+      "vendor": "xAI / SpaceXAI",
+      "aliases": ["grok-4.5", "grok 4.5", "cursor-grok-4.5"],
+      "released": "2026",
+      "cutoff": "late 2025 / early 2026 — verify live",
+      "latest": [
+        "Predecessor to Grok 4.6. Weaker on coding and long agents. Prefer 4.6 behavior when the host is 4.5: more verification, more research."
+      ],
+      "strengths": ["Speed", "General knowledge work"],
+      "deficiencies": [
+        {
+          "id": "swe-lag",
+          "area": "coding",
+          "evidence": "Grok 4.6 improved every coding benchmark over 4.5 — 4.5 is the weaker SWE model.",
+          "bridge": "More tests, smaller diffs, extra terminal proof."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Older than 4.6.",
+          "bridge": "Live-fetch current docs. Do not trust memory."
+        }
+      ],
+      "research_gaps": ["Anything shipped after this checkpoint"],
+      "research_urls": ["https://docs.x.ai/docs/models"]
+    },
+    "claude-opus-5": {
+      "vendor": "Anthropic",
+      "aliases": ["claude-opus-5", "opus-5", "opus 5"],
+      "released": "2026-07-24",
+      "cutoff": "verify live — do not trust a memorized date",
+      "latest": [
+        "Claude Opus 5: judgment, long-horizon refactors, verification-heavy work, 1M context without a long-context surcharge.",
+        "Leads several SWE-bench Pro / intelligence-index rows; uses more turns than Grok 4.6 on long tasks."
+      ],
+      "strengths": [
+        "Architecture and root-cause",
+        "Self-verification",
+        "Long context",
+        "Instruction following"
+      ],
+      "deficiencies": [
+        {
+          "id": "over-plan",
+          "area": "stopping at a plan",
+          "evidence": "Strong judgment models spend turns planning instead of contacting the world.",
+          "bridge": "Lock the noun, then do. Never stop at a plan. Evidence on disk."
+        },
+        {
+          "id": "over-refuse",
+          "area": "over-refusal on benign engineering",
+          "evidence": "Claude family is conservative on dual-use-adjacent engineering.",
+          "bridge": "Stay in scope: patch, harden, test. Do not invent extra blockers."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Parametric knowledge still lags the live web.",
+          "bridge": "Fetch current docs and GitHub. Expand the sample set."
+        }
+      ],
+      "research_gaps": [
+        "Post-cutoff APIs and papers",
+        "Host-specific unpublished workflows"
+      ],
+      "research_urls": [
+        "https://docs.anthropic.com/en/docs/about-claude/models/overview"
+      ]
+    },
+    "claude-sonnet-5": {
+      "vendor": "Anthropic",
+      "aliases": ["claude-sonnet-5", "sonnet-5", "sonnet 5"],
+      "released": "2026",
+      "cutoff": "verify live",
+      "latest": ["Claude Sonnet 5: daily coding workhorse. Weaker than Opus 5 on the hardest judgment."],
+      "strengths": ["Speed vs Opus", "Implementation loops"],
+      "deficiencies": [
+        {
+          "id": "under-effort",
+          "area": "hard judgment",
+          "evidence": "Mid-tier vs Opus 5 / Fable 5 on the hardest refactors.",
+          "bridge": "Extra review pass, extra tests, extra research on unfamiliar APIs."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Same family cutoff problem.",
+          "bridge": "Live-fetch current sources."
+        }
+      ],
+      "research_gaps": ["Post-cutoff changes", "Deep architecture trade-offs"],
+      "research_urls": [
+        "https://docs.anthropic.com/en/docs/about-claude/models/overview"
+      ]
+    },
+    "claude-fable-5": {
+      "vendor": "Anthropic",
+      "aliases": ["claude-fable-5", "fable-5", "fable 5"],
+      "released": "2026",
+      "cutoff": "verify live",
+      "latest": ["Claude Fable 5: hardest reasoning / agent work. Expensive. Can over-think papercuts."],
+      "strengths": ["Deep reasoning", "Hard agents"],
+      "deficiencies": [
+        {
+          "id": "over-plan",
+          "area": "over-thinking papercuts",
+          "evidence": "Frontier reasoning models spend a laboratory on a one-lookup ask.",
+          "bridge": "Papercut router: one lookup, stop. Save depth for real unknowns."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Reasoning does not refresh the sample set.",
+          "bridge": "Still fetch live sources for facts after cutoff."
+        }
+      ],
+      "research_gaps": ["Post-cutoff facts"],
+      "research_urls": [
+        "https://docs.anthropic.com/en/docs/about-claude/models/overview"
+      ]
+    },
+    "gpt-5.6": {
+      "vendor": "OpenAI",
+      "aliases": [
+        "gpt-5.6",
+        "gpt 5.6",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        "sol-high",
+        "gpt5.6"
+      ],
+      "released": "2026",
+      "cutoff": "verify live",
+      "latest": [
+        "GPT-5.6 family: Sol (flagship terminal/coding agent), Terra (mid), Luna (fast/cheap).",
+        "Leads several terminal-bench / coding-agent index rows. Long-context input surcharge above ~272k tokens."
+      ],
+      "strengths": [
+        "Terminal-heavy coding",
+        "Programmatic tool use",
+        "Parallel agent execution"
+      ],
+      "deficiencies": [
+        {
+          "id": "long-context",
+          "area": "long context / stuffing",
+          "evidence": "Surcharge and attention dilution above ~272k input tokens.",
+          "bridge": "Retrieve, do not dump. Cite the file you actually read."
+        },
+        {
+          "id": "over-tool",
+          "area": "tool thrash",
+          "evidence": "Strong tool-users call tools without a warrant.",
+          "bridge": "Cheap-ping known atoms. One probe that would kill the claim."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Parametric knowledge is still dated.",
+          "bridge": "Live-fetch docs. Expand the sample set before API claims."
+        }
+      ],
+      "research_gaps": [
+        "Post-cutoff libraries",
+        "Private repo conventions"
+      ],
+      "research_urls": ["https://platform.openai.com/docs/models"]
+    },
+    "gemini-3": {
+      "vendor": "Google",
+      "aliases": [
+        "gemini-3",
+        "gemini 3",
+        "gemini-3.1",
+        "gemini-3.5",
+        "gemini-3.6",
+        "gemini-3.7"
+      ],
+      "released": "2026",
+      "cutoff": "verify live",
+      "latest": [
+        "Gemini 3.x: long context, multimodal, cost. Coding still trails Opus 5 / GPT-5.6 Sol on several SWE rows. Flash/Lite variants under-think."
+      ],
+      "strengths": ["Long context", "Multimodal", "Price"],
+      "deficiencies": [
+        {
+          "id": "swe-lag",
+          "area": "autonomous software engineering",
+          "evidence": "Public comparisons still put Gemini behind Sol/Opus on several SWE benches.",
+          "bridge": "More tests, smaller steps, extra terminal proof."
+        },
+        {
+          "id": "instruction-drift",
+          "area": "instruction following",
+          "evidence": "Flash/Lite lanes drop constraints on long jobs.",
+          "bridge": "Re-state the lock and bar at each checkpoint. Evidence, not vibe."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Live web still beats parametric memory.",
+          "bridge": "Fetch current sources. Expand the sample set."
+        }
+      ],
+      "research_gaps": ["Post-cutoff APIs", "Repo-local truth"],
+      "research_urls": ["https://ai.google.dev/gemini-api/docs/models"]
+    },
+    "composer": {
+      "vendor": "Cursor",
+      "aliases": ["composer-2", "composer-2.5", "cursor-composer"],
+      "released": "2026",
+      "cutoff": "verify live",
+      "latest": [
+        "Cursor Composer: in-editor coding specialist. Fast variants skip research and tests."
+      ],
+      "strengths": ["In-editor edits", "Speed"],
+      "deficiencies": [
+        {
+          "id": "under-effort",
+          "area": "research and verification",
+          "evidence": "Composer lanes optimize for edit speed.",
+          "bridge": "Force tests, extra research for unfamiliar APIs, bar check before done."
+        },
+        {
+          "id": "cutoff",
+          "area": "knowledge cutoff",
+          "evidence": "Editor models still have a cutoff.",
+          "bridge": "Live-fetch current docs."
+        }
+      ],
+      "research_gaps": ["Post-cutoff libraries"],
+      "research_urls": ["https://cursor.com/docs"]
+    }
+  },
+  "variant_overlays": {
+    "fast": {
+      "tokens": ["fast", "flash", "lite", "mini", "haiku", "luna", "low"],
+      "deficiencies": [
+        {
+          "id": "under-effort",
+          "area": "fast-variant compute",
+          "evidence": "This lane is sold on speed. It under-researches and stops at the first plausible draft.",
+          "bridge": "Spend more steps on the same model: extra web research, more data points, run tests, second pass, meet the raised bar."
+        }
+      ]
+    },
+    "thinking": {
+      "tokens": ["thinking", "xhigh", "max", "ultra", "reason"],
+      "deficiencies": [
+        {
+          "id": "over-plan",
+          "area": "thinking-max over-planning",
+          "evidence": "High-reasoning lanes can spend the budget on a plan.",
+          "bridge": "Thinking is not a warrant. Contact the world. Checkpoint and do."
+        }
+      ]
+    }
+  }
+}

@@ -28,6 +28,11 @@ def observations_dir() -> Path:
     return home() / "observations"
 
 
+def models_dir() -> Path:
+    """Cached model-assessor dossiers. TTL is a few days to a few weeks."""
+    return home() / "models"
+
+
 def platform_dir() -> Path:
     return home() / "platform"
 
@@ -66,6 +71,7 @@ def ensure_layout() -> Path:
         canonical_dir(),
         runs_dir(),
         observations_dir(),
+        models_dir(),
         platform_dir() / "proposals",
         patterns_dir(),
         skills_dir(),

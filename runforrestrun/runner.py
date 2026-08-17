@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from runforrestrun.assessor import assess_and_attach
 from runforrestrun.autonomy import check_autonomy
+from runforrestrun.initiative import open_initiative
 from runforrestrun.install import watch_once
 from runforrestrun.model_aware import consult, remember_run
 from runforrestrun.observer import record_observation
@@ -12,7 +14,6 @@ from runforrestrun.platform import maybe_propose
 from runforrestrun.trail import (
     append_event,
     start_trail,
-    write_plan,
     write_truth,
 )
 from runforrestrun.voice import cached_skill_voice, opening
@@ -29,7 +30,7 @@ def run_objective(
     project_root: Path | None = None,
     packaged: Path | None = None,
 ) -> dict:
-    """Start a trail, speak two lines, keep everything under one ID."""
+    """Start a trail, recruit a specialist, write first-slice stories."""
     watch = watch_once(project_root=project_root, packaged=packaged)
     trail = start_trail(objective)
     run_id = trail["run_id"]
@@ -44,21 +45,19 @@ def run_objective(
     )
     aware = consult(objective, run_id=run_id)
     remember_run(objective, run_id=run_id, matches=aware)
+    assessment = assess_and_attach(run_id, objective)
     write_truth(
         run_id,
         f"# Atoms\n\nObjective: {objective}\n\n"
+        f"Model: {assessment.identity.label()} (source: {assessment.identity.source})\n"
+        f"Bar: {assessment.bar.get('min_score')} — same model, plug the gaps.\n\n"
         f"Unknown until probed. Designed disconfirmation comes first.\n"
         f"Type to course-correct. This file is the semantic scratch for the run.\n\n"
         f"{aware['instruction']}\n",
     )
-    write_plan(
-        run_id,
-        f"# Plan\n\n1. Lock the noun.\n2. Cheap-ping cached skills + known warrants.\n"
-        f"3. Probe remaining unknowns.\n4. Do the work.\n5. Check evidence.\n"
-        f"6. If a new access path was proven, mint a subskill "
-        f"(`run-forrest-run --learned-access SURFACE`).\n",
-    )
-    append_event(run_id, "laboratory", "trail opened; waiting on probes")
+    opened = open_initiative(run_id, objective, project_root=project_root)
+    opened.pop("recruitment_obj", None)
+    append_event(run_id, "laboratory", "trail opened; specialist recruited; first-slice stories ready")
     if aware.get("cheap_ping"):
         append_event(
             run_id,
@@ -67,12 +66,14 @@ def run_objective(
         )
     record_observation(
         kind="run",
-        note="objective started",
+        note="objective started with recruitment",
         example=objective,
         foundational_need="",
         run_id=run_id,
     )
     proposal = maybe_propose(objective, run_id=run_id)
+    if assessment.voice:
+        voice = voice + "\n" + assessment.voice
     if proposal:
         voice = voice + "\n" + str(proposal.get("voice") or "")
     if aware.get("skills"):
@@ -92,4 +93,11 @@ def run_objective(
         "canonical": watch.get("canonical"),
         "model_aware": aware,
         "cached_skills": aware.get("skills") or [],
+        "model": assessment.identity.label(),
+        "bar": assessment.bar,
+        "injected": assessment.injected,
+        "assessor": assessment.as_dict(),
+        "recruitment": opened.get("recruitment"),
+        "hypothesis": opened.get("hypothesis"),
+        "stories": opened.get("stories"),
     }

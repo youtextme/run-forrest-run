@@ -23,8 +23,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--watch", action="store_true", help="Re-scan for newly installed IDEs/CLIs")
     p.add_argument("--sync", action="store_true", help="Pull latest canonical from GitHub main and re-default all hosts")
     p.add_argument("--status", action="store_true", help="Show canonical home and hosts")
+    p.add_argument(
+        "--assess-model",
+        action="store_true",
+        help="Identify the model at work, reuse or refresh the dossier, print the bar raiser",
+    )
+    p.add_argument(
+        "--force-research",
+        action="store_true",
+        help="Ignore a fresh model-assessor cache and research again",
+    )
     p.add_argument("--steer", metavar="RUN_ID", help="Append a course-correction to a trail")
-    p.add_argument("--message", default="", help="Steer text (with --steer)")
+    p.add_argument("--message", default="", help="Steer or story text")
+    p.add_argument("--complete-story", metavar="RUN_ID", help="Mark a story done on a trail")
+    p.add_argument("--story", default="", help="Story id (with --complete-story)")
+    p.add_argument("--add-stories", metavar="RUN_ID", help="Add MECE stories from --message")
+    p.add_argument("--revise", metavar="RUN_ID", help="Revise the living hypothesis from latest evidence")
     p.add_argument("--json", action="store_true", help="Machine-readable output")
     p.add_argument("--consent", metavar="SLUG", help="Record yes/no for a community capability PR")
     p.add_argument("--yes", action="store_true", help="Consent yes (with --consent)")
@@ -104,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.sync:
             result = install_into_hosts(packaged=packaged)
-            result["voice"] = two_lines(
+            voice = two_lines(
                 "Synced canonical brain from GitHub main. Every host got the latest skill.",
                 f"Hosts: {', '.join(result.get('hosts') or [])}. Reload your IDE.",
             )
@@ -135,14 +149,43 @@ def main(argv: list[str] | None = None) -> int:
             print(voice)
         return 0 if result.get("ok") else 1
 
-    if args.status:
-        from runforrestrun.hosts import detect
-        from runforrestrun.paths import home, hosts_state_path
+    if args.assess_model:
+        from runforrestrun.assessor import assess_model
 
+        assessment = assess_model(force=args.force_research)
+        payload = assessment.as_dict()
+        if args.json:
+            print(json.dumps(payload, indent=2, default=str))
+        else:
+            print(assessment.voice)
+            print(f"\ncache: {assessment.cache_path}")
+            print(f"bar: {assessment.bar.get('min_score')}")
+            print("injected:")
+            for prompt in assessment.injected:
+                print(f"  - {prompt[:200]}")
+        return 0
+
+    if args.status:
+        from runforrestrun.assessor import detect_model, load_cached_dossier
+        from runforrestrun.hosts import detect
+        from runforrestrun.paths import home, hosts_state_path, models_dir
+
+        ident = detect_model()
+        cached, age = load_cached_dossier(ident.slug)
         payload = {
             "home": str(home()),
             "hosts_file": str(hosts_state_path()),
             "detected": [h.id for h in detect()],
+            "model": {
+                "raw": ident.raw,
+                "slug": ident.slug,
+                "family": ident.family,
+                "variant": ident.variant,
+                "source": ident.source,
+                "cache_age_days": age,
+                "cache_fresh": bool(cached) and age is not None,
+                "models_dir": str(models_dir()),
+            },
         }
         if hosts_state_path().exists():
             payload["state"] = json.loads(hosts_state_path().read_text(encoding="utf-8"))
@@ -153,16 +196,71 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.steer:
-        from runforrestrun.trail import record_steer
+        from runforrestrun.initiative import apply_steer
         from runforrestrun.voice import two_lines
 
-        record_steer(args.steer, args.message or "course-correct")
+        result = apply_steer(args.steer, args.message or "course-correct")
         print(
             two_lines(
                 f"Steer recorded on trail `{args.steer}`. Nothing earlier is wasted.",
                 "I'll take that heading. Keep typing if you want another turn.",
             )
         )
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
+        return 0
+
+    if args.add_stories:
+        from runforrestrun.initiative import add_user_stories
+        from runforrestrun.voice import two_lines
+
+        result = add_user_stories(args.add_stories, args.message or "")
+        n = len((result.get("stories") or {}).get("stories") or [])
+        print(
+            two_lines(
+                f"Specialist absorbed the new stories on trail `{args.add_stories}`. {n} stories now, MECE re-checked.",
+                "Type more stories anytime. The generalist still does not author them.",
+            )
+        )
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
+        return 0
+
+    if args.complete_story:
+        from runforrestrun.initiative import complete_story
+        from runforrestrun.voice import two_lines
+
+        if not args.story:
+            print("need --story S1 (with --complete-story)")
+            return 2
+        result = complete_story(
+            args.complete_story,
+            args.story,
+            evidence=args.message or "contacted the world",
+        )
+        print(
+            two_lines(
+                f"Story `{args.story}` is on the trail. Synthesis and revision follow if the slice is closed.",
+                f"Trail `{args.complete_story}` keeps the evidence. Type to add stories or rethink.",
+            )
+        )
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
+        return 0
+
+    if args.revise:
+        from runforrestrun.initiative import advance_initiative
+        from runforrestrun.voice import two_lines
+
+        result = advance_initiative(args.revise, steer=args.message or "")
+        print(
+            two_lines(
+                f"Hypothesis on trail `{args.revise}` was revised from the latest evidence.",
+                "The specialist still owns the plan. The generalist only recruited.",
+            )
+        )
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
         return 0
 
     if args.consent:
