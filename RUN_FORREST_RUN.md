@@ -24,5 +24,7 @@ for a few days to a few weeks, and injects extra prompts so the *same*
 model still meets a good-enough score: more web research, more data
 points, more effort. Never switch models to dodge a weakness.
 
-Methods are not tenets. LangGraph, CrewAI, AutoGen, and whatever ships
-next week are loops we compose. Swap them. Do not freeze them as law.
+Methods are not tenets. The default method is **recruit → first-slice MECE
+stories → subvisions → synthesize → revise**. A generalist consultant
+recruits; a specialist authors. LangGraph, CrewAI, AutoGen, and whatever
+ships next week are loops we compose. Swap them. Do not freeze them as law.

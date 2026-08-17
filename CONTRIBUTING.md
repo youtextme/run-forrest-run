@@ -16,6 +16,7 @@ pytest
 | If you are changing… | Edit… | Also update… |
 |---------------------|-------|--------------|
 | Agent behavior / voice | Root [`SKILL.md`](SKILL.md) | [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md) if tenets or loop change |
+| Recruitment / stories | [`runforrestrun/recruitment.py`](runforrestrun/recruitment.py), [`stories.py`](runforrestrun/stories.py), [`initiative.py`](runforrestrun/initiative.py) | [`HOW_TO_BUILD.md`](HOW_TO_BUILD.md) science function; tests in [`tests/test_initiative.py`](tests/test_initiative.py) |
 | Host install paths | [`runforrestrun/hosts.py`](runforrestrun/hosts.py) | [`HOW_TO_BUILD.md`](HOW_TO_BUILD.md) |
 | Always-latest sync list | [`runforrestrun/upstream.py`](runforrestrun/upstream.py) `SYNC_FILES` | README “Why you always get the latest” |
 | Model assessor / catalog | [`runforrestrun/assessor.py`](runforrestrun/assessor.py), [`runforrestrun/model_catalog.json`](runforrestrun/model_catalog.json) | SKILL “Model (bar raiser)”, README disk layout |

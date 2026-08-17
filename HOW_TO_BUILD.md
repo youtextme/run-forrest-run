@@ -4,7 +4,7 @@ Methods. Tenets stay in [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md).
 
 ## From scratch
 
-1. Failing tests: unevaluated is not true; prose is not a warrant; two-line voice; host detect.
+1. Failing tests: unevaluated is not true; prose is not a warrant; two-line voice; host detect; recruitment science; MECE stories.
 2. Canonical store `~/.run-forrest-run/`.
 3. Trail per run ID.
 4. Host catalog + copy skill to every detected IDE/CLI.
@@ -14,6 +14,20 @@ Methods. Tenets stay in [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md).
 8. Model assessor: detect the model, cache a dossier (few days–few weeks),
    inject same-model bridges until the bar is met.
 9. Then the skill with `alwaysApply: true` and `AGENTS.md` for hosts without that flag.
+
+## Default loop (method, not a tenet)
+
+Every objective opens an **initiative**:
+
+1. A **generalist consultant** recruits. They do not write the plan or the stories.
+2. Candidates are *derived from the problem atoms* — not a frozen roster of job titles.
+3. The science function is a **multinomial naive-Bayes likelihood ratio** against a generalist null. Expertise is a peaked distribution. The solver is whoever makes the observed problem most likely. α = 0.5. Scores live in `recruit.json`.
+4. The winning specialist gets a specific **question** and **skill set**, then authors the living hypothesis and the MECE stories for the **first** sub-objective only.
+5. Each story is assigned to a named recruit. `who.md` records who did what.
+6. **Subvisions** (`runs/<id>/subvisions/<story>/`) are isolated workers. Each pulls only its payload. Partitions are mutually exclusive and collectively exhaustive of the current slice.
+7. After the slice, **synthesize**: was it met? Then **revise** the hypothesis. Revision is allowed until the last atom, including a full rethink. The human may add stories; the specialist re-checks MECE.
+
+Modules: `signature.py`, `recruitment.py`, `stories.py`, `revision.py`, `synthesis.py`, `initiative.py`.
 
 ## One-command default
 

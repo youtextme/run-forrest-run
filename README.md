@@ -78,6 +78,7 @@ This is the full inventory — not marketing fluff. After `./install.sh`, you ha
 | **Upstream sync** | Pull latest skill, constitution, and community catalog from GitHub `main` on every install/sync. | [`runforrestrun/upstream.py`](runforrestrun/upstream.py) |
 | **Frontier catalog** | LangGraph, CrewAI, AutoGen, and other loops as **methods** — compose them, don’t freeze them as law. | [`runforrestrun/frontier.json`](runforrestrun/frontier.json) |
 | **Observer** | Learns *how* you work. Strips names, emails, paths. Never ships who you are. | `~/.run-forrest-run/observations/` |
+| **Recruitment + MECE stories** | A generalist only recruits. The specialist authors first-slice MECE stories, subvisions, and revisions. | trail `recruit.json` / `stories.json` / `subvisions/` |
 | **Model assessor** | Knows which model is at work. Researches its latest strengths, deficiencies, and sample-set gaps. Caches a few days to a few weeks. Injects extra research and effort so the **same** model still clears the bar. | `~/.run-forrest-run/models/<slug>/` + trail `model.json` / `bar.md` / `injected.md` |
 | **Platform proposals** | Rare foundational capabilities only — opt-in PRs with **full credit** to you. Not a PR per prompt. | `~/.run-forrest-run/platform/proposals/` |
 | **CLI shim** | `run-forrest-run "fix the failing test"` from any shell. | `~/.local/bin/run-forrest-run` |
@@ -92,10 +93,13 @@ flowchart TB
   subgraph prompt["Every prompt"]
     P[Any prompt] --> V["🌲 Run, Forrest, Run! — invoked."]
     V --> T[Trail ID]
-    T --> R[runs/id/ lock truth plan steer artifacts]
+    T --> R[Generalist recruits]
+    R --> S[Specialist authors first-slice MECE stories]
+    S --> U[Subvisions pull exclusive payloads]
+    U --> Y[Synthesize and revise the living hypothesis]
   end
   C --> H
-  T --> O[Observer → abstracted notes]
+  Y --> O[Observer → abstracted notes]
   T --> M[Model assessor → cache + injected bar]
   O --> F[Rare foundational skills → community PRs]
   SYNC[GitHub main] -.->|on install / --sync| C
@@ -156,11 +160,12 @@ Type anything anytime. Steer is full freedom. Nothing already on the trail is th
 
 1. **Lock** — one sentence goal + checks that prove done. **Know the model.**
 2. **Assess** — reuse a few-days-to-few-weeks dossier, or independently research this model's gaps and inject extra prompts.
-3. **Split atoms** — separate facts, preferences, and unknowns.
-4. **Probe** — cheap-ping known warrants; experiment on unknowns; extra web research to expand the sample set.
-5. **Do** — implement; never stop at a plan. Same model; more effort.
-6. **Check** — run real commands/tests against the world until the bar is met.
-7. **Checkpoint** — write evidence under one run ID.
+3. **Recruit** — a generalist consultant scores specialists with the likelihood-ratio function. The generalist does **not** write the plan.
+4. **Hypothesis** — the recruited specialist bets on the work, then writes MECE stories for the **first** sub-objective only.
+5. **Subvisions** — one isolated worker per story; each pulls only its payload.
+6. **Synthesize** — did that slice actually get met?
+7. **Revise** — the specialist re-checks whether the remaining bet is still right. Allowed until the last atom, including a full rethink. You can add stories.
+8. **Checkpoint** — evidence under one run ID.
 8. **Report** — two 🌲 lines; invite steer.
 
 Chat is not memory. The trail is.
@@ -183,7 +188,14 @@ Full loop spec: [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md) · Build guide: [`HOW
 ├── runs/<id>/              ← one prompt
 │   ├── lock.md
 │   ├── truth.md
-│   ├── plan.md
+│   ├── plan.md             ← living hypothesis (specialist-authored)
+│   ├── recruit.json        ← likelihood-ratio scores; question; skill set
+│   ├── stories.json        ← MECE stories for the current slice
+│   ├── who.md              ← who did what (recruiter vs specialists)
+│   ├── hypothesis.json
+│   ├── synthesis.json
+│   ├── revisions.jsonl
+│   ├── subvisions/<id>/    ← exclusive payload per story
 │   ├── trail.md
 │   ├── model.json          ← which model, dossier, injected prompts
 │   ├── bar.md              ← good-enough score for this model + objective
@@ -242,6 +254,9 @@ python3 -m runforrestrun --status               # canonical home, hosts, last sy
 python3 -m runforrestrun --assess-model         # identify model, reuse or refresh dossier, print bar
 python3 -m runforrestrun "fix the failing test" # start a trail from the shell
 python3 -m runforrestrun --steer RUN_ID --message "use purple, not pink"
+python3 -m runforrestrun --add-stories RUN_ID --message "add these 7 more stories: a; b; c; d; e; f; g"
+python3 -m runforrestrun --complete-story RUN_ID --story S1 --message "pytest passed"
+python3 -m runforrestrun --revise RUN_ID
 python3 -m runforrestrun --consent cheap-ping-not-literature --yes --credit "Your Name"
 python3 -m runforrestrun --json                 # machine-readable output (with other flags)
 ```
@@ -314,6 +329,12 @@ run-forrest-run/
 │   ├── trail.py             ← run ID + artifacts
 │   ├── assessor.py          ← model identity, cached research, bar raiser
 │   ├── model_catalog.json   ← AI-researcher prior (refreshed on sync)
+│   ├── signature.py         ← problem atoms and MECE cuts
+│   ├── recruitment.py       ← likelihood-ratio specialist scoring
+│   ├── stories.py           ← MECE first-slice stories
+│   ├── revision.py          ← living hypothesis
+│   ├── synthesis.py         ← was the slice met?
+│   ├── initiative.py        ← recruit → stories → subvisions → revise
 │   ├── voice.py             ← two-line 🌲 formatter
 │   ├── observer.py          ← depersonalized observations
 │   └── platform.py          ← rare capability proposals + consent
