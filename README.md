@@ -78,6 +78,7 @@ This is the full inventory — not marketing fluff. After `./install.sh`, you ha
 | **Upstream sync** | Pull latest skill, constitution, and community catalog from GitHub `main` on every install/sync. | [`runforrestrun/upstream.py`](runforrestrun/upstream.py) |
 | **Frontier catalog** | LangGraph, CrewAI, AutoGen, and other loops as **methods** — compose them, don’t freeze them as law. | [`runforrestrun/frontier.json`](runforrestrun/frontier.json) |
 | **Observer** | Learns *how* you work. Strips names, emails, paths. Never ships who you are. | `~/.run-forrest-run/observations/` |
+| **Model-aware cached skills** | Stores patterns, reviews them, mints subskills from proven access (Slack, MCP, …). Next similar prompt cheap-pings the cache. | `~/.run-forrest-run/skills/` + `patterns/` |
 | **Platform proposals** | Rare foundational capabilities only — opt-in PRs with **full credit** to you. Not a PR per prompt. | `~/.run-forrest-run/platform/proposals/` |
 | **CLI shim** | `run-forrest-run "fix the failing test"` from any shell. | `~/.local/bin/run-forrest-run` |
 | **Zero runtime deps** | Pure Python 3.10+. No pip packages required to run. | [`pyproject.toml`](pyproject.toml) |
@@ -95,6 +96,9 @@ flowchart TB
   end
   C --> H
   T --> O[Observer → abstracted notes]
+  O --> PAT[Patterns store + review]
+  PAT --> S[Cached subskills rfr-slack / rfr-mcp]
+  S -->|next similar prompt| V
   O --> F[Rare foundational skills → community PRs]
   SYNC[GitHub main] -.->|on install / --sync| C
 ```
@@ -187,6 +191,9 @@ Full loop spec: [`RUN_FOREST_RUN.md`](RUN_FOREST_RUN.md) · Build guide: [`HOW_T
 │   ├── events.jsonl
 │   └── artifacts/
 ├── observations/           ← how you work (identity stripped)
+├── patterns/               ← stored + reviewed work patterns (every prompt)
+├── skills/                 ← cached subskills (rfr-slack, …) + catalog.json
+├── model-aware/            ← MCP inventory + plugged model gaps
 ├── platform/proposals/   ← rare foundational skills, opt-in
 └── hosts.json              ← IDEs/CLIs already defaulted
 ```
@@ -232,6 +239,12 @@ python3 -m runforrestrun --status               # canonical home, hosts, last sy
 python3 -m runforrestrun "fix the failing test" # start a trail from the shell
 python3 -m runforrestrun --steer RUN_ID --message "use purple, not pink"
 python3 -m runforrestrun --consent cheap-ping-not-literature --yes --credit "Your Name"
+python3 -m runforrestrun --skills                 # cached subskills this machine can cheap-ping
+python3 -m runforrestrun --patterns               # stored work patterns
+python3 -m runforrestrun --learn                  # review patterns; mint missing skills from proven access
+python3 -m runforrestrun --learned-access slack --method mcp --run-id RUN_ID
+python3 -m runforrestrun --register-mcp slack --mcp-tool list_channels
+python3 -m runforrestrun --plug-gap "didn't know slack MCP" --plug "use rfr-slack" --as-skill slack
 python3 -m runforrestrun --json                 # machine-readable output (with other flags)
 ```
 
@@ -267,9 +280,10 @@ Aliases: `run forrest run`, `run forest run`, `true that`
 We do **not** open a PR for every prompt. That would drown real signal.
 
 1. The **observer** writes abstracted notes — patterns of *how* people work, not *who* they are.
-2. When a **foundational** capability appears (reusable across operators), Run, Forrest, Run asks once in two lines.
-3. **You choose.** Yes → community skill PR with **full credit** to you. No → stays on your machine.
-4. Nothing personal ships. Ever.
+2. **Model-aware** stores those patterns, reviews which method was cheapest, and mints a **cached subskill** when access is proven (Slack, GitHub, an MCP server). The next similar prompt cheap-pings `~/.run-forrest-run/skills/catalog.json` instead of rediscovering the path.
+3. When a **foundational** capability appears (reusable across operators), Run, Forrest, Run asks once in two lines.
+4. **You choose.** Yes → community skill PR with **full credit** to you. No → stays on your machine.
+5. Nothing personal ships. Ever.
 
 That is the movement: millions of operators, a small shared capability set, honest credits.
 
@@ -300,6 +314,9 @@ run-forrest-run/
 │   ├── trail.py             ← run ID + artifacts
 │   ├── voice.py             ← two-line 🌲 formatter
 │   ├── observer.py          ← depersonalized observations
+│   ├── patterns.py          ← store / review / match work patterns
+│   ├── cached_skills.py     ← mint rfr-<surface> subskills from proven access
+│   ├── model_aware.py       ← consult catalog, plug model gaps, MCP inventory
 │   └── platform.py          ← rare capability proposals + consent
 └── tests/test_platform.py
 ```

@@ -16,6 +16,7 @@ from runforrestrun.hosts import (
 )
 from runforrestrun.frontier import refresh_frontier
 from runforrestrun.github_credentials import install_github_credentials
+from runforrestrun.cached_skills import publish_all
 from runforrestrun.paths import canonical_dir, ensure_layout, hosts_state_path, home
 from runforrestrun.upstream import sync_from_upstream
 from runforrestrun.session_bootstrap import (
@@ -60,7 +61,7 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → split atoms → cheap-ping known warrants → experiment unknowns → do → check →
+Lock → split atoms → cheap-ping cached skills + known warrants → experiment unknowns → do → check →
 checkpoint under one run ID → two-line report. Never stop at a plan. Papercuts:
 one lookup, stop.
 
@@ -68,6 +69,23 @@ one lookup, stop.
 
 Everything for this prompt lives in `~/.run-forrest-run/runs/<id>/` (lock, truth,
 plan, events, steer, artifacts, checkpoint). Chat is not memory.
+
+## Model-aware (cached skills)
+
+The model does not remember Slack (or GitHub, or an MCP server) across runs.
+This machine does. Before probing an access path, cheap-ping:
+
+- `~/.run-forrest-run/skills/catalog.json`
+- `~/.run-forrest-run/skills/CACHED_SKILLS.md`
+- `~/.run-forrest-run/patterns/index.json`
+- `~/.run-forrest-run/model-aware/mcp.json`
+
+If a cached subskill matches (`rfr-slack`, `rfr-github`, …), **run it from cache**.
+Do not rediscover auth or layout. After you prove a *new* access path:
+
+`python -m runforrestrun --learned-access SURFACE --method mcp --run-id <trail>`
+
+That mints a subskill subsequent runs will see. Review and improve with `--learn`.
 
 ## Autonomy
 
@@ -92,7 +110,8 @@ AGENTS_BLOCK = f"""## Run, Forrest, Run! (NON-NEGOTIABLE)
 - Every prompt is an objective. Invoke: Run, Forrest, Run! — invoked.
 - Two-line 🌲 updates only. Type anything to course-correct. Trail: `~/.run-forrest-run/runs/<id>/`.
 - Trusted full access. No Allow prompts. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
-- Loop: lock → probe → do → check → checkpoint. Never stop at a plan.
+- Loop: lock → cheap-ping cached skills → probe → do → check → checkpoint. Never stop at a plan.
+- Model-aware: cheap-ping `~/.run-forrest-run/skills/catalog.json` before rediscovering Slack/MCP/any access. After you prove a path: `python -m runforrestrun --learned-access SURFACE`.
 - CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"`
 - Canonical: https://github.com/youtextme/run-forrest-run
 """
@@ -110,12 +129,14 @@ alwaysApply: true
 {FIRST_MESSAGE_LINE2}
 
 Every prompt is an objective. All updates are two 🌲 lines. Trusted ON. Kill switch: RUN_FORREST_LOCKDOWN=1.
+Cheap-ping `~/.run-forrest-run/skills/catalog.json` before rediscovering Slack/MCP/any access. Mint with `--learned-access`.
 """
 
 COPILOT = """# Run, Forrest, Run!
 
 Every prompt is an objective. Start with: Run, Forrest, Run! — invoked.
 Two-line updates. Evidence on disk. Never stop at a plan.
+Cheap-ping cached skills at ~/.run-forrest-run/skills/catalog.json before rediscovering access.
 """
 
 DEVIN_GLOBAL_RULES = f"""# Run, Forrest, Run! — always on (Devin)
@@ -125,6 +146,7 @@ DEVIN_GLOBAL_RULES = f"""# Run, Forrest, Run! — always on (Devin)
 
 Every prompt is an objective. Two-line 🌲 updates. Trail under ~/.run-forrest-run/runs/.
 Trusted full access. Kill switch: RUN_FORREST_LOCKDOWN=1.
+Cheap-ping ~/.run-forrest-run/skills/catalog.json before rediscovering Slack/MCP.
 """
 
 DEVIN_RULE = f"""---
@@ -140,6 +162,7 @@ trigger: always_on
 {FIRST_MESSAGE_LINE2}
 
 Non-negotiable for every session. Canonical: https://github.com/youtextme/run-forrest-run
+Cheap-ping ~/.run-forrest-run/skills/catalog.json before rediscovering Slack/MCP.
 """
 
 LEGACY_RUNNER_SKILLS = (
@@ -328,6 +351,7 @@ def install_into_hosts(
         hosts_state_path().write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     github = install_github_credentials(project_root=root)
     bootstrap = verify_all_platforms(project_root=root, home_root=Path.home())
+    published_skills = publish_all(project_root=root)
     return {
         "ok": True and bootstrap["ok"],
         "canonical": str(canonical),
@@ -339,6 +363,7 @@ def install_into_hosts(
         "github": github,
         "removed": removed,
         "bootstrap": bootstrap,
+        "cached_skills_published": published_skills,
     }
 
 

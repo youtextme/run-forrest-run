@@ -11,7 +11,8 @@ Methods. Tenets stay in [`RUN_FORREST_RUN.md`](RUN_FORREST_RUN.md).
 5. Watcher for new hosts.
 6. Observer that strips identity.
 7. Capability proposals that are rare and credited.
-8. Then the skill with `alwaysApply: true` and `AGENTS.md` for hosts without that flag.
+8. Model-aware: store every prompt as a pattern; review which method was cheapest; mint a cached subskill after proven access (Slack, MCP, …) so the next similar run cheap-pings instead of rediscovering.
+9. Then the skill with `alwaysApply: true` and `AGENTS.md` for hosts without that flag.
 
 ## One-command default
 

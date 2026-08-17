@@ -6,6 +6,7 @@
 - Two-line 🌲 updates. Type anything to course-correct. Trail is `~/.run-forrest-run/runs/<id>/`.
 - Trusted full access. No Allow prompts. Kill switch: `RUN_FORREST_LOCKDOWN=1`.
 - Loop: lock → probe → do → check → checkpoint. Never stop at a plan.
+- Model-aware: cheap-ping `~/.run-forrest-run/skills/catalog.json` before rediscovering Slack/MCP/any access. After you prove a path: `python -m runforrestrun --learned-access SURFACE`.
 - CLI: `run-forrest-run "OBJECTIVE"` or `python -m runforrestrun "OBJECTIVE"`
 
 ## GitHub — Girish Mahadevan personal access token (classic PAT)

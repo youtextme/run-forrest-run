@@ -6,6 +6,7 @@ from pathlib import Path
 
 from runforrestrun.autonomy import check_autonomy
 from runforrestrun.install import watch_once
+from runforrestrun.model_aware import consult, remember_run
 from runforrestrun.observer import record_observation
 from runforrestrun.platform import maybe_propose
 from runforrestrun.trail import (
@@ -14,7 +15,7 @@ from runforrestrun.trail import (
     write_plan,
     write_truth,
 )
-from runforrestrun.voice import opening
+from runforrestrun.voice import cached_skill_voice, opening
 
 
 def _noun(objective: str) -> str:
@@ -41,17 +42,29 @@ def run_objective(
         autonomous=auto.ok,
         need=auto.need,
     )
+    aware = consult(objective, run_id=run_id)
+    remember_run(objective, run_id=run_id, matches=aware)
     write_truth(
         run_id,
         f"# Atoms\n\nObjective: {objective}\n\n"
         f"Unknown until probed. Designed disconfirmation comes first.\n"
-        f"Type to course-correct. This file is the semantic scratch for the run.\n",
+        f"Type to course-correct. This file is the semantic scratch for the run.\n\n"
+        f"{aware['instruction']}\n",
     )
     write_plan(
         run_id,
-        f"# Plan\n\n1. Lock the noun.\n2. Probe unknowns.\n3. Do the work.\n4. Check evidence.\n",
+        f"# Plan\n\n1. Lock the noun.\n2. Cheap-ping cached skills + known warrants.\n"
+        f"3. Probe remaining unknowns.\n4. Do the work.\n5. Check evidence.\n"
+        f"6. If a new access path was proven, mint a subskill "
+        f"(`run-forrest-run --learned-access SURFACE`).\n",
     )
     append_event(run_id, "laboratory", "trail opened; waiting on probes")
+    if aware.get("cheap_ping"):
+        append_event(
+            run_id,
+            "cheap-ping",
+            "cached skills: " + ", ".join(s.get("slug") or "" for s in aware.get("skills") or []),
+        )
     record_observation(
         kind="run",
         note="objective started",
@@ -62,6 +75,10 @@ def run_objective(
     proposal = maybe_propose(objective, run_id=run_id)
     if proposal:
         voice = voice + "\n" + str(proposal.get("voice") or "")
+    if aware.get("skills"):
+        slugs = [str(s.get("slug") or "") for s in aware["skills"] if s.get("slug")]
+        best = str((aware["skills"][0].get("best_method") or ""))[:120]
+        voice = voice + "\n" + cached_skill_voice(slugs=slugs, run_id=run_id, best=best)
     return {
         "run_id": run_id,
         "job_dir": trail["job_dir"],
@@ -73,4 +90,6 @@ def run_objective(
         "new_hosts": watch.get("new_hosts") or [],
         "proposal": proposal,
         "canonical": watch.get("canonical"),
+        "model_aware": aware,
+        "cached_skills": aware.get("skills") or [],
     }

@@ -29,7 +29,7 @@ Preferences are recorded. Build context from warrants. Blocked means change the 
 
 ## Loop
 
-Lock → split atoms → cheap-ping known warrants → experiment unknowns → do → check →
+Lock → split atoms → cheap-ping cached skills + known warrants → experiment unknowns → do → check →
 checkpoint under one run ID → two-line report. Never stop at a plan. Papercuts:
 one lookup, stop.
 
@@ -37,6 +37,23 @@ one lookup, stop.
 
 Everything for this prompt lives in `~/.run-forrest-run/runs/<id>/` (lock, truth,
 plan, events, steer, artifacts, checkpoint). Chat is not memory.
+
+## Model-aware (cached skills)
+
+The model does not remember Slack (or GitHub, or an MCP server) across runs.
+This machine does. Before probing an access path, cheap-ping:
+
+- `~/.run-forrest-run/skills/catalog.json`
+- `~/.run-forrest-run/skills/CACHED_SKILLS.md`
+- `~/.run-forrest-run/patterns/index.json`
+- `~/.run-forrest-run/model-aware/mcp.json`
+
+If a cached subskill matches (`rfr-slack`, `rfr-github`, …), **run it from cache**.
+Do not rediscover auth or layout. After you prove a *new* access path:
+
+`python -m runforrestrun --learned-access SURFACE --method mcp --run-id <trail>`
+
+That mints a subskill subsequent runs will see. Review and improve with `--learn`.
 
 ## Autonomy
 
