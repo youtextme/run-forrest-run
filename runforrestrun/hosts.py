@@ -50,8 +50,11 @@ def _exists(path: Path) -> bool:
         return False
 
 
-def detect(project_root: Path | None = None) -> list[Host]:
-    """Hosts that are actually on this machine or in this project."""
+CORE_DEFAULT_HOSTS = frozenset({"cursor", "devin", "openclaw"})
+
+
+def detect(project_root: Path | None = None, *, include_core_defaults: bool = True) -> list[Host]:
+    """Hosts on this machine. Core agents (Cursor, Devin, OpenClaw) always default."""
     root = (project_root or Path.cwd()).resolve()
     home = _home()
     found: list[Host] = []
@@ -73,7 +76,12 @@ def detect(project_root: Path | None = None) -> list[Host]:
             home / ".config" / "devin",
             home / "Library" / "Application Support" / "devin",
         ],
-        "openclaw": [home / ".openclaw", Path(os.environ.get("OPENCLAW_HOME") or "")],
+        "openclaw": [
+            home / ".openclaw",
+            root / ".agents",
+            home / ".agents",
+            Path(os.environ.get("OPENCLAW_HOME") or ""),
+        ],
         "aider": [home / ".aider", root / ".aider.conf.yml", root / "CONVENTIONS.md"],
         "goose": [home / ".config" / "goose", home / ".goose"],
         "continue": [home / ".continue", root / ".continue"],
@@ -106,6 +114,12 @@ def detect(project_root: Path | None = None) -> list[Host]:
         if hit and host.id not in seen:
             seen.add(host.id)
             found.append(host)
+
+    if include_core_defaults:
+        for host in CATALOG:
+            if host.id in CORE_DEFAULT_HOSTS and host.id not in seen:
+                seen.add(host.id)
+                found.append(host)
     return found
 
 
@@ -136,12 +150,9 @@ def skill_destinations(host: Host, project_root: Path) -> list[Path]:
         dests += [
             root / ".agents" / "skills" / name,
             home / ".agents" / "skills" / name,
+            openclaw / "workspace" / "skills" / name,
+            openclaw / "skills" / name,
         ]
-        if openclaw.exists() or os.environ.get("OPENCLAW_HOME"):
-            dests += [
-                openclaw / "workspace" / "skills" / name,
-                openclaw / "skills" / name,
-            ]
     elif host.id == "vscode":
         dests += []  # copilot-instructions.md via extra_instruction_files
     elif host.id == "continue":
@@ -182,17 +193,20 @@ def extra_instruction_files(host: Host, project_root: Path) -> dict[str, str]:
     root = project_root.resolve()
     home = _home()
     files: dict[str, str] = {}
-    if host.id in {"codex", "aider", "goose", "amp", "gemini", "cli-python", "agents-spec"}:
+    if host.id in {"codex", "aider", "goose", "amp", "gemini", "cli-python", "agents-spec", "devin", "openclaw"}:
         files[str(root / "AGENTS.md")] = "agents"
     if host.id == "cursor":
         files[str(root / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
         files[str(home / ".cursor" / "rules" / "run-forrest-run.mdc")] = "rule"
+    if host.id == "devin":
+        files[str(root / ".devin" / "instructions.md")] = "devin"
+        files[str(home / ".devin" / "instructions.md")] = "devin"
     if host.id == "vscode" or host.id == "copilot":
         files[str(root / ".github" / "copilot-instructions.md")] = "copilot"
     if host.id == "aider":
         files[str(root / "CONVENTIONS.md")] = "aider"
     if host.id == "openclaw":
         openclaw = Path(os.environ.get("OPENCLAW_HOME") or (home / ".openclaw"))
-        if openclaw.exists() or os.environ.get("OPENCLAW_HOME"):
-            files[str(openclaw / "workspace" / "AGENTS.md")] = "agents"
+        files[str(openclaw / "workspace" / "AGENTS.md")] = "agents"
+        files[str(openclaw / "AGENTS.md")] = "agents"
     return files

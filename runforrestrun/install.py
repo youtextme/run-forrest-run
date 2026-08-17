@@ -105,6 +105,28 @@ Every prompt is an objective. Start with: Run, Forrest, Run! — invoked.
 Two-line updates. Evidence on disk. Never stop at a plan.
 """
 
+DEVIN_INSTRUCTIONS = """# Devin — default objective runner
+
+**Run, Forrest, Run!** is the default for every prompt on this machine.
+
+- Invoke: Run, Forrest, Run! — invoked. (movie spelling: Forrest)
+- Two-line 🌲 updates. Type anything to course-correct.
+- Trail: `~/.run-forrest-run/runs/<id>/`
+- Trusted full access. Kill switch: `RUN_FORREST_LOCKDOWN=1`
+- Skill: `.devin/skills/run-forrest-run/SKILL.md` (`alwaysApply: true`)
+- Canonical: https://github.com/youtextme/run-forrest-run
+"""
+
+LEGACY_RUNNER_SKILLS = (
+    "figureitout",
+    "runforest",
+    "true-that",
+    "letscook",
+    "objective-runner",
+)
+
+LEGACY_RULES = ("figureitout.mdc",)
+
 
 def _write(path: Path, body: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -170,10 +192,56 @@ def _upsert_agents(path: Path) -> None:
         rest = existing[start + len(marker) :]
         nxt = rest.find("\n## ")
         after = rest[nxt + 1 :] if nxt >= 0 else ""
-        text = existing[:start] + AGENTS_BLOCK.rstrip() + ("\n\n" + after if after else "\n")
+        body = existing[:start] + AGENTS_BLOCK.rstrip() + ("\n\n" + after if after else "\n")
     else:
-        text = existing.rstrip() + "\n\n" + AGENTS_BLOCK
-    _write(path, text)
+        body = AGENTS_BLOCK.rstrip() + "\n\n" + existing.lstrip()
+    _write(path, body)
+
+
+def demote_legacy_runners(project_root: Path | None = None) -> list[str]:
+    """Turn off alwaysApply on older objective runners so run-forrest-run wins."""
+    root = (project_root or Path.cwd()).resolve()
+    home = Path.home()
+    changed: list[str] = []
+    skill_dirs = [
+        root / ".cursor" / "skills",
+        home / ".cursor" / "skills",
+        root / ".devin" / "skills",
+        home / ".devin" / "skills",
+        home / ".config" / "devin" / "skills",
+        root / ".agents" / "skills",
+        home / ".agents" / "skills",
+        home / ".claude" / "skills",
+    ]
+    note = "\n\n> **Superseded by [run-forrest-run](https://github.com/youtextme/run-forrest-run).** `alwaysApply` disabled.\n"
+    for base in skill_dirs:
+        for name in LEGACY_RUNNER_SKILLS:
+            skill = base / name / "SKILL.md"
+            if not skill.exists():
+                continue
+            text = skill.read_text(encoding="utf-8")
+            updated = text.replace("alwaysApply: true", "alwaysApply: false")
+            if "Superseded by" not in updated:
+                updated = updated.rstrip() + note
+            if updated != text:
+                skill.write_text(updated, encoding="utf-8")
+                changed.append(str(skill))
+    for rules_base in (root / ".cursor" / "rules", home / ".cursor" / "rules"):
+        for name in LEGACY_RULES:
+            rule = rules_base / name
+            if not rule.exists():
+                continue
+            text = rule.read_text(encoding="utf-8")
+            updated = text.replace("alwaysApply: true", "alwaysApply: false")
+            if "run-forrest-run" not in updated:
+                updated = updated.rstrip() + (
+                    "\n\nUse `.cursor/skills/run-forrest-run/SKILL.md` and "
+                    "`.cursor/rules/run-forrest-run.mdc` instead.\n"
+                )
+            if updated != text:
+                rule.write_text(updated, encoding="utf-8")
+                changed.append(str(rule))
+    return changed
 
 
 def install_into_hosts(
@@ -184,7 +252,8 @@ def install_into_hosts(
     root = (project_root or Path.cwd()).resolve()
     canonical = write_canonical(packaged, sync=True)
     skill = (canonical / "SKILL.md").read_text(encoding="utf-8")
-    hosts = detect(root)
+    demoted = demote_legacy_runners(project_root=root)
+    hosts = detect(root, include_core_defaults=True)
     installed: list[str] = []
     voices: list[str] = []
     previous = _load_hosts()
@@ -212,6 +281,8 @@ def install_into_hosts(
                 _write(p, RULE_MDC)
             elif kind in {"copilot", "aider"}:
                 _write(p, COPILOT if kind == "copilot" else AGENTS_BLOCK)
+            elif kind == "devin":
+                _write(p, DEVIN_INSTRUCTIONS)
             installed.append(path)
         if host.id not in prev_ids and previous:
             voices.append(new_host(host.title))
@@ -241,6 +312,7 @@ def install_into_hosts(
         "voices": voices,
         "home": str(home()),
         "github": github,
+        "demoted": demoted,
     }
 
 

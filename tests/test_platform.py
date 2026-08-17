@@ -136,8 +136,13 @@ def test_lockdown_blocks_autonomy(monkeypatch):
     assert "lockdown" in auto.need.lower()
 
 
-def test_detect_finds_python():
-    hosts = detect()
+def test_detect_includes_core_agents(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    from runforrestrun.hosts import detect
+
+    hosts = detect(tmp_path / "proj", include_core_defaults=True)
     ids = {h.id for h in hosts}
-    assert "cli-python" in ids
-    assert "agents-spec" in ids
+    assert "cursor" in ids
+    assert "devin" in ids
+    assert "openclaw" in ids
+
